@@ -4,12 +4,10 @@ _"It takes 20 years to build a reputation and five minutes to ruin it. If you th
 
 Mark git repositories in a block chain to determine consensus for the definitive branch
 
-[![dependency status](https://david-dm.org/solidpayorg/node-gitlog.svg)](https://david-dm.org/solidpayorg/gitmark)
-
 ## Installation
 
 ```sh
-npm install -g gitmark
+sudo npm install -g gitmark
 ```
 
 ## Usage
@@ -32,7 +30,7 @@ Gitmark is pre-alpha software, it should be considered experimental, and used at
 
 ## Getting started
 
-Gitmark supports any block chains that have an argument for being provably fair. Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake. As gitmark was designed for grounding reputation trees in the bitmark block chain, that is the first chain to be supported, it is also an inexpensive testing ground to get started
+Gitmark supports any block chains that have an argument for being provably fair. Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake. As gitmark was designed for grounding reputation trees in the bitmark block chain, that is the first chain to be supported, it is also an inexpensive testing ground to get started. We also are supporters of the bitcoin project, however, that may be better suited to high value projects, as the software matures
 
 The first prerequisite is to obtain an unspent transaction on a block chain. Recommended value to get started, experimentally, is 1 BTM. After that you send that value to an address for which you have the keypair. That becomes your genesis unspent transaction.
 
@@ -53,3 +51,7 @@ After running this script, an empty commit message is generated which you can ch
 Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. In this way the block chain points to git. It then points the next commit back to the block chain tx, creating two way link. Similarly the definitive git tree forms a chain of commits that go forward in time, and so do the new transaction on the block chain. Further commits are periodically marked in time proving an auditable trail in both time on-chain of the evolution of the git tree. It also shows the latest confirmed state of a git tree that can be used for trading or in safe or smart contracts
 
 The first use case for bitcoin is marking of reputation trees, but it can be applied to any git system where the history is important
+
+## License
+
+MIT
