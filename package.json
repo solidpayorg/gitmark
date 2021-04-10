@@ -1,0 +1,32 @@
+{
+  "name": "gitmark",
+  "version": "0.0.1",
+  "description": "gitmark",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/solidpayorg/gitmark.git"
+  },
+  "keywords": [
+    "gitmark"
+  ],
+  "bin": {
+    "bit-mark": "bin/bin-mark"
+  },
+  "author": "Melvin Carvalho",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/solidpayorg/gitmark/issues"
+  },
+  "homepage": "https://github.com/solidpayorg/gitmark#readme",
+  "dependencies": {
+    "bitcoinjs-lib": "^5.2.0",
+    "fs": "^0.0.1-security",
+    "gitlog": "^4.0.4",
+    "minimist": "^1.2.5",
+    "tiny-secp256k1": "^1.1.6"
+  }
+}
