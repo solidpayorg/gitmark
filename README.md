@@ -52,6 +52,10 @@ Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-singl
 
 The first use case for bitcoin is marking of reputation trees, but it can be applied to any git system where the history is important
 
+## Source code
+
+[Source](https://github.com/solidpayorg/gitmark)
+
 ## License
 
 MIT
