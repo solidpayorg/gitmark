@@ -42,7 +42,7 @@ You will need a genesis address for the first run of the form `tx:output` and su
 
 You will also need the private key from that tx, which is an argument to the gitmark script, but can be also saved in a location as directed by the output from the git mark command. Warning: do not use the default private key in the script!
 
-Git mark will generate a new address to send to, a fee, an amount, an spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory
+Git mark will generate a new address to send to, a fee, an amount, a spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory
 
 After running this script, an empty commit message is generated which you can check in, and points to the latest unspent transaction, creating a two way link
 
@@ -50,7 +50,7 @@ After running this script, an empty commit message is generated which you can ch
 
 Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. In this way the block chain points to git. It then points the next commit back to the block chain tx, creating two way link. Similarly the definitive git tree forms a chain of commits that go forward in time, and so do the new transaction on the block chain. Further commits are periodically marked in time proving an auditable trail in both time on-chain of the evolution of the git tree. It also shows the latest confirmed state of a git tree that can be used for trading or in safe or smart contracts
 
-The first use case for bitcoin is marking of reputation trees, but it can be applied to any git system where the history is important
+The first use case for gitmark is marking of reputation trees, but it can be applied to any git system where the history is important
 
 ## Source code
 
