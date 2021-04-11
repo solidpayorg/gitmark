@@ -85,12 +85,12 @@ The first use case for gitmark is marking of reputation trees, but it can be app
 
 - Private git repositories can be supported out of the box, and given that private keys are used in each seal, encrypted backups can be made
 
-- The key tree can be backed up or archived using git clone in multiple locations. It is natural that popular projects are cloned often in any case
+- The project git tree can be backed up or archived using git clone in multiple locations. It is natural that popular projects are cloned often in any case
 
 - Seals can be opened and closed using a federation, in order to try out multiple consensus and vefification methods
 
-- MOre robust verification frameworks can be build using node testing frameworks, tho currently the distribution contains a git-mark-verify script
+- More robust verification frameworks can be built using node testing frameworks, tho currently the distribution contains a git-mark-verify script
 
 ## License
 
-MIT
+- MIT
