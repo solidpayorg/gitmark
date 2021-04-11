@@ -28,9 +28,7 @@ One can reconstruct the current state from the history, and this can also be use
 
 Gitmark uses any git system, and enables secure stamping to a block chain, in order to ensure the integrity of the definitive git history
 
-Many thanks go to Peter Todd for his work on [single use seals]((https://petertodd.org/2017/scalable-single-use-seal-asset-transfer)
-
-- [RGB](https://rgb-org.github.io/)) and Dr Maxim Orlovsky for his work on [RGB](https://rgb-org.github.io/)
+Many thanks go to Peter Todd for his work on [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) and Dr Maxim Orlovsky for his work on [RGB](https://rgb-org.github.io/)
 
 _Gitmark is pre-alpha software, it should be considered experimental, and used at your own risk_
 
