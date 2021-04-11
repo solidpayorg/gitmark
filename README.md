@@ -2,7 +2,7 @@ _"It takes 20 years to build a reputation and five minutes to ruin it. If you th
 
 # gitmark
 
-Mark git repositories in a block chain to determine consensus for the definitive branch
+Gitmark extends git to allow commits to be "marked" (using the command `git mark`) by a supporting block chain. This "reinforces" or "finalizes" a given commit, to determine global consensus for the definitive project history
 
 ## Installation
 
@@ -60,11 +60,11 @@ The first use case for gitmark is marking of reputation trees, but it can be app
 
 - [Single Use Seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer)
 - [RGB](https://rgb-org.github.io/)
-- [Commerce Block Mainstay](https://www.commerceblock.com/mainstay/) [White Paper](https://cloudflare-ipfs.com/ipns/ipfs.commerceblock.com/commerceblock-whitepaper-mainstay.pdf)
+- [Commerce Block Mainstay](https://www.commerceblock.com/mainstay/) [[White Paper](https://cloudflare-ipfs.com/ipns/ipfs.commerceblock.com/commerceblock-whitepaper-mainstay.pdf)]
 
 ## Source code
 
-[Source](https://github.com/solidpayorg/gitmark)
+- [Source](https://github.com/solidpayorg/gitmark)
 
 ## License
 
