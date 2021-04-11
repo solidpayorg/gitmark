@@ -52,6 +52,16 @@ Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-singl
 
 The first use case for gitmark is marking of reputation trees, but it can be applied to any git system where the history is important
 
+## Recent git marks
+
+- [Github](https://github.com/search?o=desc&q=%22gitmark+%22&s=committer-date&type=Commits)
+
+## Related work
+
+- [Single Use Seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer)
+- [RGB](https://rgb-org.github.io/)
+- [Commerce Block Mainstay](https://www.commerceblock.com/mainstay/) [White Paper](https://cloudflare-ipfs.com/ipns/ipfs.commerceblock.com/commerceblock-whitepaper-mainstay.pdf)
+
 ## Source code
 
 [Source](https://github.com/solidpayorg/gitmark)
