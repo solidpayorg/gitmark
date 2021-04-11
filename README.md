@@ -20,19 +20,29 @@ git mark [--genesis txoutput] # used for the genesis commit
 
 ## Introduction
 
-Git mark, is an extension to the [marking](https://github.com/project-bitmark/marking/wiki) concept which aims to allow global distributed reputation trees to be grounded in a block chain. In this way you provide consensus on the definitive chain. Can ensure that the history has not been tampered with. Can reconstruct the current state from the history. And be used to save your reputation in time if any provider ceases to operate
+Gitmark, was created to enable the [marking](https://github.com/project-bitmark/marking/wiki) concept, which aims to allow global distributed reputation trees, to be grounded in a block chain
 
-Gitmark uses any git and provides a secure stamping chain to ensure the integrity of the definitive chain
+What is made possible, is a way to provide consensus on a definitive git chain, to ensure that the history has not been tampered with
 
-Many thanks go to Peter Todd for his work on single use seals and Dr Maxim Orlovsky for his work on RGB
+One can reconstruct the current state from the history, and this can also be used to preserve your reputation at any given time, say, if any provider ceases to operate
 
-Gitmark is pre-alpha software, it should be considered experimental, and used at your own risk
+Gitmark uses any git system, and enables secure stamping to a block chain, in order to ensure the integrity of the definitive git history
+
+Many thanks go to Peter Todd for his work on [single use seals]((https://petertodd.org/2017/scalable-single-use-seal-asset-transfer)
+
+- [RGB](https://rgb-org.github.io/)) and Dr Maxim Orlovsky for his work on [RGB](https://rgb-org.github.io/)
+
+_Gitmark is pre-alpha software, it should be considered experimental, and used at your own risk_
 
 ## Getting started
 
-Gitmark supports any block chains that have an argument for being provably fair. Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake. As gitmark was designed for grounding reputation trees in the bitmark block chain, that is the first chain to be supported, it is also an inexpensive testing ground to get started. We also are supporters of the bitcoin project, however, that may be better suited to high value projects, as the software matures
+Gitmark supports any block chains that have an argument for being provably fair. Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake. As gitmark was designed for grounding reputation trees in the bitmark block chain, that is the first chain to be supported, it is also an inexpensive testing ground to get started. We are supporters of the upstream bitcoin project, and aim to innovate in that space. With being better suited to be used on high value projects, as the software matures
 
-The first prerequisite is to obtain an unspent transaction on a block chain. Recommended value to get started, experimentally, is 1 BTM. After that you send that value to an address for which you have the keypair. That becomes your genesis unspent transaction.
+The first prerequisite is to obtain an unspent transaction on a block chain. This can be in any coin, but to get started we recommended, getting hold of 1 Bitmark, which is the project we are using for our testing
+
+After that you send that value to an address for which you have the keypair. That becomes your genesis unspent transaction
+
+Having created a genesis transaction, and kept the key pair safe, you are ready to start marking!
 
 ## Git mark
 
@@ -40,7 +50,9 @@ Running `git mark` on a repo will create your first marking
 
 You will need a genesis address for the first run of the form `tx:output` and supply that with the argument --genesis [tx]
 
-You will also need the private key from that tx, which is an argument to the gitmark script, but can be also saved in a location as directed by the output from the git mark command. Warning: do not use the default private key in the script!
+You will also need the private key from that tx, which is an argument to the gitmark script, but can be also saved in a location as directed by the output from the git mark command
+
+_Warning: do not use the default private key, that is set, in the script!_
 
 Git mark will generate a new address to send to, a fee, an amount, a spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory
 
@@ -61,10 +73,22 @@ The first use case for gitmark is marking of reputation trees, but it can be app
 - [Single Use Seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer)
 - [RGB](https://rgb-org.github.io/)
 - [Commerce Block Mainstay](https://www.commerceblock.com/mainstay/) [[White Paper](https://cloudflare-ipfs.com/ipns/ipfs.commerceblock.com/commerceblock-whitepaper-mainstay.pdf)]
+- [BIp 175 - Pay to Contract Protocol](https://github.com/bitcoin/bips/blob/master/bip-0175.mediawiki)
+
+## Future work
+
+- Git marks can be extended to further layers by using git submodules hence creating almost unlimited space
+
+- Private git repositories can be supported out of the box, and given that private keys are used in each seal, encrypted backups can be made
+
+- The key tree can be backed up or archived using git clone in multiple locations. It is natural that popular projects are cloned often in any case
+
+- Seals can be opened and closed using a federation, in order to try out multiple consensus and vefification methods
 
 ## Source code
 
 - [Source](https://github.com/solidpayorg/gitmark)
+- [NPM](https://www.npmjs.com/package/gitmark)
 
 ## License
 
