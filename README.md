@@ -66,6 +66,22 @@ The first use case for gitmark is marking of reputation trees, but it can be app
 
 - [Github](https://github.com/search?o=desc&q=%22gitmark+%22&s=committer-date&type=Commits)
 
+## Use Cases
+
+- Distributed Reputation Trees
+- Distributed Ledgers
+- Registries
+- Safe or Smart Contracts
+- Asset Issuance
+- Distributed Exchanges
+- Reconstruct histories from Genesis
+- Distributd Global consensus problems
+- Domain independent web sites
+- Archiving and Time Travel through History
+- Distributed Identity and PKI
+- Federated Side Chains
+- Auditing histories
+
 ## Related work
 
 - [Single Use Seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer)

@@ -1,6 +1,6 @@
 {
   "name": "gitmark",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "gitmark",
   "main": "index.js",
   "scripts": {
