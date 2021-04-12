@@ -75,12 +75,14 @@ The first use case for gitmark is marking of reputation trees, but it can be app
 - Asset Issuance
 - Distributed Exchanges
 - Reconstruct histories from Genesis
-- Distributd Global consensus problems
+- Distributed Global Consensus
 - Domain independent web sites
 - Archiving and Time Travel through History
 - Distributed Identity and PKI
 - Federated Side Chains
-- Auditing histories
+- Auditing Histories
+- Fraud Detection
+- Supply Chains
 
 ## Related work
 
