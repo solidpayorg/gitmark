@@ -89,7 +89,7 @@ The first use case for gitmark is marking of reputation trees, but it can be app
 - [Single Use Seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer)
 - [RGB](https://rgb-org.github.io/)
 - [Commerce Block Mainstay](https://www.commerceblock.com/mainstay/) [[White Paper](https://cloudflare-ipfs.com/ipns/ipfs.commerceblock.com/commerceblock-whitepaper-mainstay.pdf)]
-- [BIp 175 - Pay to Contract Protocol](https://github.com/bitcoin/bips/blob/master/bip-0175.mediawiki)
+- [BIP 175 - Pay to Contract Protocol](https://github.com/bitcoin/bips/blob/master/bip-0175.mediawiki)
 
 ## Source code
 

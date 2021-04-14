@@ -1,6 +1,6 @@
 {
   "name": "gitmark",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "gitmark",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,7 @@
     "gitmark"
   ],
   "bin": {
-    "bit-mark": "bin/bin-mark"
+    "bit-mark": "bin/git-mark"
   },
   "author": "Melvin Carvalho",
   "license": "MIT",
