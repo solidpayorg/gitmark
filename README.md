@@ -1,4 +1,4 @@
-_"It takes 20 years to build a reputation and five minutes to ruin it. If you think about that you'll do things differently." -- Warren Buffett_
+_"Thought through my eyes. Signatures of all things I am here to read" -- James Joyce_
 
 # gitmark
 
@@ -20,27 +20,39 @@ git mark [--genesis txoutput] # used for the genesis commit
 
 ## Introduction
 
-Gitmark, was created to facilitate the [marking](https://github.com/project-bitmark/marking/wiki) concept, which aims to allow global, distributed, reputation trees, to be grounded in a block chain
+Gitmark, was originally created to facilitate the [marking](https://github.com/project-bitmark/marking/wiki) use case, which aims to allow global, distributed, reputation trees, to be grounded in a block chain
 
-What is made possible, is a way to provide consensus on a definitive git chain, to ensure that the history has not been tampered with
+What is made possible, is a way to provide consensus on a definitive git branch/chain, in order to ensure that the history has not been tampered with
 
 One can reconstruct the current state from the history, and this can also be used to preserve your reputation at any given time, say, if any provider ceases to operate
 
-Gitmark uses any git system, and enables secure stamping to a block chain, in order to ensure the integrity of the definitive git history
+It's also possible to audit and verify the integrity of the git chain, to create a secure, finalized, state machine
+
+The system can be extended beyond reputation trees, to any git based system that benefits from a secure, verifyable chain of blocks, to determine the definitve history
 
 Many thanks go to Peter Todd for his work on [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) and Dr Maxim Orlovsky for his work on [RGB](https://rgb-org.github.io/)
 
 _Gitmark is pre-alpha software, it should be considered experimental, and used at your own risk_
 
+## Prerequisites
+
+Gitmark supports any block chains that have an argument for being provably fair. Since gitmark was created for reputation trees, the reputation of the underlying block chain should be unimpared. Therefore, Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake.
+
+The bitmark block chain, is the first chain to be implemented, as it was designed to for the grounding of reputation trees. it is also an inexpensive testing ground to get started, and a pathway to innovation on larger chains
+
+We are supporters of the upstream bitcoin project, and aim to innovate in the space. With the bitcoin block chain being well suited to be used on high value projects, as the gitmark software matures. The Liquid network is also a possible target, and Litecoin appears to be another good possibility
+
+The first prerequisite is to obtain an unspent transaction on a block chain. This can be in any coin, but to get started we recommended, getting hold of one Bitmark, which is the project we are using for our testing, and can be obtained inexpensively. Marks can be easily earnt as they were designed to be given to good actors
+
 ## Getting started
 
-Gitmark supports any block chains that have an argument for being provably fair. Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake. As gitmark was designed for grounding reputation trees in the bitmark block chain, that is the first chain to be supported, it is also an inexpensive testing ground to get started. We are supporters of the upstream bitcoin project, and aim to innovate in the space. With the bitcoin block chain being well suited to be used on high value projects, as the gitmark software matures
-
-The first prerequisite is to obtain an unspent transaction on a block chain. This can be in any coin, but to get started we recommended, getting hold of one Bitmark, which is the project we are using for our testing, and can be obtained inexpensively
-
-After that you send that value to an address for which you have the keypair. That becomes your genesis unspent transaction
+After you have obtained some block chain currency, send that value to an address for which you have the keypair. That becomes your genesis unspent transaction
 
 Having created a genesis transaction, and recording the key pair safefly, you are ready to start marking!
+
+Install gitmark globally via npm, the executables will be in the bin directory which can be located with `which git-mark`
+
+The genesis transaction provides the first input to the `git mark` command, and the private key is needed to advance the genesis transaction in line with the current git HEAD
 
 ## Git mark
 
@@ -58,7 +70,11 @@ After running this script, an empty commit message is generated which you can ch
 
 ## How it works
 
-Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. In this way the block chain points to git. It then points the next commit back to the block chain tx, creating two way link. Similarly the definitive git tree forms a chain of commits that go forward in time, and so do the new transaction on the block chain. Further commits are periodically marked in time proving an auditable trail in both time on-chain of the evolution of the git tree. It also shows the latest confirmed state of a git tree that can be used for trading or in safe or smart contracts
+Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. The current git hash is added to the original public key in the output transaction, creating a chain of commits in the block chain
+
+In this way the block chain points to git. It then points the next commit back to the block chain tx, creating two way link, and therefore, strong binding, at one particular point in time
+
+Similarly the definitive git tree forms a chain of commits that go forward in time, and so do the new transaction on the block chain. Further commits are periodically marked in time proving an auditable trail in both time on-chain of the evolution of the git tree. It also shows the latest confirmed state of a git tree that can be used for trading or in safe or smart contracts
 
 The first use case for gitmark is marking of reputation trees, but it can be applied to any git system where the history is important
 
