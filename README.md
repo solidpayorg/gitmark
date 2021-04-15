@@ -38,11 +38,11 @@ _Gitmark is pre-alpha software, it should be considered experimental, and used a
 
 Gitmark supports any block chains that have an argument for being provably fair. Since gitmark was created for reputation trees, the reputation of the underlying block chain should be unimpared. Therefore, Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake
 
-The bitmark block chain, is the first chain to be implemented, as it was designed to for the grounding of reputation trees. It is also an inexpensive testing ground to get started, and a pathway to innovation on larger chains
+The bitmark block chain, is the first chain to be implemented, as it was designed for the grounding of reputation trees. It is also an inexpensive testing ground to get started, and a pathway to innovation on larger chains
 
 We are supporters of the upstream bitcoin project, and aim to innovate in the space, contribute back code, and operate as a testing ground. We believe the bitcoin block chain is well suited to be used with high value projects, as the gitmark software matures. The Liquid network is also a possible target, and Litecoin appears to be another good possibility
 
-The first prerequisite is to obtain an unspent transaction on a block chain. This can be in any coin, but to get started we recommended, getting hold of one Bitmark, which is the project we are using for our testing, and can be obtained inexpensively. Marks can be easily earnt as they were designed to be given to good actors
+The first prerequisite is to obtain an unspent transaction on a block chain. This can be in any coin, but to get started we recommended, getting hold of one Bitmark, which is the project we are using for our testing, and can be obtained inexpensively. Marks can be easily earnt as they were designed to be given to good actors, for being generally helpful
 
 ## Getting started
 
@@ -52,7 +52,7 @@ Having created a genesis transaction, and recording the key pair safely, you are
 
 Install gitmark globally via npm, the executables will be in the bin directory which can be located with `which git-mark`
 
-The genesis transaction provides the first input to the `git mark` command, and the private key is needed to advance the genesis transaction in line with the current git HEAD
+The genesis transaction provides the first input to the `git mark` command, and the private key (secret exponent in hex) is needed to advance the genesis transaction in line with the current git HEAD
 
 ## Git mark
 
