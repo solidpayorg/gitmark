@@ -36,11 +36,11 @@ _Gitmark is pre-alpha software, it should be considered experimental, and used a
 
 ## Prerequisites
 
-Gitmark supports any block chains that have an argument for being provably fair. Since gitmark was created for reputation trees, the reputation of the underlying block chain should be unimpared. Therefore, Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake.
+Gitmark supports any block chains that have an argument for being provably fair. Since gitmark was created for reputation trees, the reputation of the underlying block chain should be unimpared. Therefore, Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake
 
-The bitmark block chain, is the first chain to be implemented, as it was designed to for the grounding of reputation trees. it is also an inexpensive testing ground to get started, and a pathway to innovation on larger chains
+The bitmark block chain, is the first chain to be implemented, as it was designed to for the grounding of reputation trees. It is also an inexpensive testing ground to get started, and a pathway to innovation on larger chains
 
-We are supporters of the upstream bitcoin project, and aim to innovate in the space. With the bitcoin block chain being well suited to be used on high value projects, as the gitmark software matures. The Liquid network is also a possible target, and Litecoin appears to be another good possibility
+We are supporters of the upstream bitcoin project, and aim to innovate in the space, contribute back code, and operate as a testing ground. We believe the bitcoin block chain is well suited to be used with high value projects, as the gitmark software matures. The Liquid network is also a possible target, and Litecoin appears to be another good possibility
 
 The first prerequisite is to obtain an unspent transaction on a block chain. This can be in any coin, but to get started we recommended, getting hold of one Bitmark, which is the project we are using for our testing, and can be obtained inexpensively. Marks can be easily earnt as they were designed to be given to good actors
 
@@ -48,7 +48,7 @@ The first prerequisite is to obtain an unspent transaction on a block chain. Thi
 
 After you have obtained some block chain currency, send that value to an address for which you have the keypair. That becomes your genesis unspent transaction
 
-Having created a genesis transaction, and recording the key pair safefly, you are ready to start marking!
+Having created a genesis transaction, and recording the key pair safely, you are ready to start marking!
 
 Install gitmark globally via npm, the executables will be in the bin directory which can be located with `which git-mark`
 
@@ -60,13 +60,15 @@ Simply running `git mark` on a repo will create your first marking
 
 You will need a genesis address for the first run of the form `tx:output` and supply that with the argument --genesis [tx]
 
-You will also need the private key from that tx, which is an argument to the gitmark script, but can be also saved in a location as directed by the output from the git mark command
+You will also need the private key from that tx, which is an argument to the gitmark script, but can be also saved in a location as directed by the output from the git mark command. The key (ie 64 char hex secret exponent) should be stored in the indicated file with the json key "privkey"
 
 _Warning: do not use the default private key, that is set, in the script!_
 
-Git mark will generate a new address to send to, a fee, an amount, a spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory
+Git mark will generate a new address to send to, a fee, an amount, a spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory. Future versions will use a transaction builder to send to a network
 
 After running this script, an empty commit message is generated which you can check in, and points to the latest unspent transaction, creating a two way link
+
+Congratulations! You have now marked your first git repo!
 
 ## How it works
 
@@ -123,7 +125,9 @@ The first use case for gitmark is marking of reputation trees, but it can be app
 
 - Seals can be opened and closed using a federation, in order to try out multiple consensus and vefification methods
 
-- More robust verification frameworks can be built using node testing frameworks, tho currently the distribution contains a git-mark-verify script
+- More robust verification frameworks can be built using node testing frameworks, and continusous integration, tho currently the distribution contains a git-mark-verify script
+
+- Lightweight Autonomous Marking Agents (LAMAs) can be created that listen to communities for marks and just work, without needing a human operator. The service can be deployed on a server or container, and be designed to bring itself up if it goes down in any one location
 
 ## License
 
