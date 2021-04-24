@@ -3,12 +3,13 @@
 // USAGE: git-mark [privkeyhex] [$(git rev-parse HEAD)]
 
 // IMPORTS
-var bitcoin = require('bitcoinjs-lib')
-var tiny = require('tiny-secp256k1')
-var argv = require('minimist')(process.argv.slice(2))
+const bitcoin = require('bitcoinjs-lib')
+const tiny = require('tiny-secp256k1')
+const argv = require('minimist')(process.argv.slice(2))
 const gitlog = require('gitlog').default
 const fs = require('fs')
 const homedir = require('os').homedir()
+const exec = require('child_process').exec
 
 // MODEL
 // default privkey = brain for urn:json:bitmark
@@ -89,7 +90,6 @@ data.genesis = argv.genesis || data.genesis
 
 console.log('data', data)
 
-
 var lastCommit = commits.filter(i => {
   return i.subject.match(/^gitmark/)
 })
@@ -97,20 +97,18 @@ if (lastCommit && lastCommit[0] && lastCommit[0].subject) {
   lastCommit = lastCommit[0].subject
   lastCommit = lastCommit.split(' ').pop()
   lastCommit = lastCommit.split(':')
-  console.log('lastCommit', lastCommit)  
+  console.log('lastCommit', lastCommit)
 } else {
   console.log('New repo, set up first gitmark')
   console.log('Add private key')
   console.log('Fund genesis tx with genesis hash')
   console.log('Add --gensis and run')
   lastCommit = data.genesis.split(':')
-  console.log('data.genesis', data.genesis)  
+  console.log('data.genesis', data.genesis)
   if (!data.genesis) {
     process.exit(-1)
   }
 }
-
-
 
 const POINT = Buffer.from(data.privkey, 'hex')
 
@@ -125,7 +123,7 @@ function findLastCommitHash () {
   if (i === commits.length) {
     return head
   } else {
-    return commits[i+1].hash
+    return commits[i + 1].hash
   }
 }
 var lastCommitHash = findLastCommitHash()
@@ -182,15 +180,25 @@ const gitmarkTxBase = homedir + '/.gitmark/tx'
 
 try {
   if (data.genesis) {
-    tx = { total_output: "1", fees: "0.00001" }
+    tx = { total_output: '1', fees: '0.00001' }
   } else {
     tx = require(gitmarkTxBase + '/' + lastCommit[0] + '.json')
   }
 } catch (e) {
   console.error(e)
-  console.error('error: need tx: ' + lastCommit[0] + 'in ' + gitmarkTxBase + '/' + lastCommit[0] + '.json')
-  console.log('try:')
-  console.log(`curl "https://chainz.cryptoid.info/marks/api.dws?q=txinfo&t=${lastCommit[0]}" > ${gitmarkTxBase}/${lastCommit[0]}.json`)
+  console.error(
+    'error: need tx: ' +
+      lastCommit[0] +
+      'in ' +
+      gitmarkTxBase +
+      '/' +
+      lastCommit[0] +
+      '.json'
+  )
+  console.log('trying:')
+  var command = `curl "https://chainz.cryptoid.info/marks/api.dws?q=txinfo&t=${lastCommit[0]}" > ${gitmarkTxBase}/${lastCommit[0]}.json`
+  console.log(cmd)
+  exec(cmd, console.log)
   console.log('do not run more than once per 10s')
   process.exit(-1)
 }
@@ -198,7 +206,7 @@ try {
 var nextfee = tx.total_output - tx.fees
 nextfee = Math.round((nextfee + Number.EPSILON) * 100000000) / 100000000
 
-var priv = data.genesis? b1 : b5
+var priv = data.genesis ? b1 : b5
 var keyPair1 = bitcoin.ECPair.fromPrivateKey(
   Buffer.from(priv.toString(16).padStart(64, 0), 'hex'),
   { network: BITMARK }
@@ -225,5 +233,7 @@ var hex = `1234`
 console.log(`signrawtransaction ${hex} null '["${keyPair1.toWIF()}"]'`)
 console.log('sendrawtransaction')
 console.log(
-  `bin/tx.sh ${lastCommit[0]} ${lastCommit[1]} ${address} ${nextfee} ${keyPair1.toWIF()}`
+  `bin/tx.sh ${lastCommit[0]} ${
+    lastCommit[1]
+  } ${address} ${nextfee} ${keyPair1.toWIF()}`
 )
