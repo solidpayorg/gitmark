@@ -18,7 +18,7 @@ git mark # marks the current commit
 git mark [--genesis txoutput] # used for the genesis commit
 ```
 
-## Introduction
+## Motivation
 
 Gitmark, was originally created to facilitate the [marking](https://github.com/project-bitmark/marking/wiki) use case, which aims to allow global, distributed, reputation trees, to be grounded in a block chain
 
@@ -26,9 +26,9 @@ What is made possible, is a way to provide consensus on a definitive git branch/
 
 One can reconstruct the current state from the history, and this can also be used to preserve your reputation at any given time, say, if any provider ceases to operate
 
-It's also possible to audit and verify the integrity of the git chain, to create a secure, finalized, state machine
+It's also possible to audit and verify the integrity of the git chain, to create a secure, finalized, state machine, with a definitive head, that is globally synced
 
-The system can be extended beyond reputation trees, to any git based system that benefits from a secure, verifyable chain of blocks, to determine the definitve history
+The system can be extended beyond reputation trees, to use any git based store, and anchor it to a secure, verifyable chain of blocks, to determine the definitve history
 
 Many thanks go to Peter Todd for his work on [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) and Dr Maxim Orlovsky for his work on [RGB](https://rgb-org.github.io/)
 
@@ -36,13 +36,15 @@ _Gitmark is pre-alpha software, it should be considered experimental, and used a
 
 ## Prerequisites
 
-Gitmark supports any block chains that have an argument for being provably fair. Since gitmark was created for reputation trees, the reputation of the underlying block chain should be unimpared. Therefore, Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus such as proof of stake
+Because gitmark was designed to anchor reputation trees, the reputation of the underlying block chain must be unimpared.  Gitmark only supports block chains that are provably fair.  Bitcoin is regarded as the most secure and fairest of all block chains, and should be used for high value projects where cost is not an issue
 
-The bitmark block chain, is the first chain to be implemented, as it was designed for the grounding of reputation trees. It is also an inexpensive testing ground to get started, and a pathway to innovation on larger chains
+Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus, such as proof of stake
 
-We are supporters of the upstream bitcoin project, and aim to innovate in the space, contribute back code, and operate as a testing ground. We believe the bitcoin block chain is well suited to be used with high value projects, as the gitmark software matures. The Liquid network is also a possible target, and Litecoin appears to be another good possibility
+In solving the reputation use case, we aim to innovate in the space, contribute back code, and operate as a testing ground
 
-The first prerequisite is to obtain an unspent transaction on a block chain. This can be in any coin, but to get started we recommended, getting hold of one Bitmark, which is the project we are using for our testing, and can be obtained inexpensively. Marks can be easily earnt as they were designed to be given to good actors, for being generally helpful
+Bearing in mind that this is experimental software, the [bitmark](https://bitmark.rocks/) block chain, is the first chain on which gitmark is tested and implemented.  As it inexpensive, easily obitained, and was designed for the grounding of reputation trees (gitmark is a play on the word bitmark). This also provides a testing ground for developers to get started.  The Liquid network is also a possible target, and Litecoin appears to be another good possibility, as well as the various testnets
+
+The first prerequisite is to obtain an unspent transaction on a supporting block chain. This can be in any coin, but to get started we suggest, getting hold of one Bitmark, which can be obtained inexpensively for example in the [chat room](https://projectbitmark.slack.com/) as it is designed to be spread between helpful actors
 
 ## Getting started
 

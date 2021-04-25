@@ -197,8 +197,8 @@ try {
   )
   console.log('trying:')
   var command = `curl "https://chainz.cryptoid.info/marks/api.dws?q=txinfo&t=${lastCommit[0]}" > ${gitmarkTxBase}/${lastCommit[0]}.json`
-  console.log(cmd)
-  exec(cmd, console.log)
+  console.log(command)
+  exec(command, console.log)
   console.log('do not run more than once per 10s')
   process.exit(-1)
 }
