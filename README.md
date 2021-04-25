@@ -44,11 +44,11 @@ In solving the reputation use case, we aim to innovate in the space, contribute 
 
 Bearing in mind that this is experimental software, the [bitmark](https://bitmark.rocks/) block chain, is the first chain on which gitmark is tested and implemented.  As it inexpensive, easily obitained, and was designed for the grounding of reputation trees (gitmark is a play on the word bitmark). This also provides a testing ground for developers to get started.  The Liquid network is also a possible target, and Litecoin appears to be another good possibility, as well as the various testnets
 
-The first prerequisite is to obtain an unspent transaction on a supporting block chain. This can be in any coin, but to get started we suggest, getting hold of one Bitmark, which can be obtained inexpensively for example in the [chat room](https://projectbitmark.slack.com/) as it is designed to be spread between helpful actors
+The first prerequisite is to obtain an unspent transaction on a supporting block chain. This can be in any coin, but to get started we suggest, getting hold of one Bitmark, which can be obtained inexpensively for example in the [chat room](https://projectbitmark.slack.com/) as it is designed to be spread between helpful actors, to foster innovation
 
 ## Getting started
 
-After you have obtained some block chain currency, send that value to an address for which you have the keypair. That becomes your genesis unspent transaction
+After you have obtained some block chain currency, send those coins to an address for which you have the keypair. That becomes the genesis unspent transaction
 
 Having created a genesis transaction, and recording the key pair safely, you are ready to start marking!
 
@@ -66,15 +66,15 @@ You will also need the private key from that tx, which is an argument to the git
 
 _Warning: do not use the default private key, that is set, in the script!_
 
-Git mark will generate a new address to send to, a fee, an amount, a spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory. Future versions will use a transaction builder to send to a network
+Git mark will generate a new address to send to, a fee, an amount, a spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory. Future versions will use a transaction builder to send to a network directly
 
-After running this script, an empty commit message is generated which you can check in, and points to the latest unspent transaction, creating a two way link
+After running this script, an empty commit message is generated which you can check in, and points to the latest new unspent transaction, creating a two way link
 
 Congratulations! You have now marked your first git repo!
 
 ## How it works
 
-Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. The current git hash is added to the original public key in the output transaction, creating a chain of commits in the block chain
+Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. The current git hash is added to the original, genesis, public key in the output transaction, creating a chain of commits in the block chain
 
 In this way the block chain points to git. It then points the next commit back to the block chain tx, creating two way link, and therefore, strong binding, at one particular point in time
 
