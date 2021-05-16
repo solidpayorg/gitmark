@@ -68,7 +68,11 @@ function getPrivKey() {
 }
 
 // INIT
-const { NETWORK } = require('../lib/networks.js').BITMARK
+let NETWORK = require('../lib/networks.js').BITMARK
+if (process.env.NETWORK) {
+  NETWORK = require('../lib/networks.js')[process.env.NETWORK] || NETWORK
+}
+console.log('NETWORK', NETWORK)
 
 const commits = gitlog(options)
 var head = commits[0].hash
