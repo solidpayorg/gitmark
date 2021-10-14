@@ -1,19 +1,25 @@
 <div align="center">
+  <h1>gitmark</h1>
+</div>
 
-# gitmark
-
+<div align="center">  
 Mark your git commits, to create global consensus, and a definitive project history
+</div>
+
+---
+
+<div align="center">
+<h4>Getting Started<h4>
+</div>
+  
+---
+  
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/solidpayorg/git-mark/blob/gh-pages/LICENSE)
 ![npm](https://img.shields.io/npm/v/gitmark)
 [![npm](https://img.shields.io/npm/dw/gitmark.svg)](https://npmjs.com/package/gitmark)
-
----
-#### Getting Started With Gitmark
----
-</div>
-
-
+  
+  
 ## Introduction
 
 Gitmark extends git to allow commits to be "marked" (using the command `git mark`) by a supporting block chain. This "reinforces" or "finalizes" a given commit, to determine global consensus and a definitive project history
