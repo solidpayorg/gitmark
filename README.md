@@ -1,8 +1,22 @@
-_"Thought through my eyes. Signatures of all things I am here to read" -- James Joyce_
+<div align="center">
 
 # gitmark
 
-Gitmark extends git to allow commits to be "marked" (using the command `git mark`) by a supporting block chain. This "reinforces" or "finalizes" a given commit, to determine global consensus for the definitive project history
+Mark your git commits, to create global consensus, and a definitive project history
+
+[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/solidpayorg/git-mark/blob/gh-pages/LICENSE)
+![npm](https://img.shields.io/npm/v/gitmark)
+[![npm](https://img.shields.io/npm/dw/gitmark.svg)](https://npmjs.com/package/gitmark)
+
+---
+#### Getting Started With Gitmark
+---
+</div>
+
+
+## Introduction
+
+Gitmark extends git to allow commits to be "marked" (using the command `git mark`) by a supporting block chain. This "reinforces" or "finalizes" a given commit, to determine global consensus and a definitive project history
 
 ## Installation
 
