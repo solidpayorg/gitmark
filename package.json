@@ -1,6 +1,6 @@
 {
   "name": "gitmark",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "gitmark",
   "main": "index.js",
   "scripts": {
@@ -24,6 +24,7 @@
   "homepage": "https://github.com/solidpayorg/gitmark#readme",
   "dependencies": {
     "bitcoinjs-lib": "^5.2.0",
+    "child_process": "^1.0.2",
     "fs": "^0.0.1-security",
     "gitlog": "^4.0.4",
     "minimist": "^1.2.5",
