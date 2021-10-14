@@ -9,7 +9,7 @@ Mark your git commits, to create global consensus, and a definitive project hist
 ---
 
 <div align="center">
-<h4>Getting Started<h4>
+<h4>Getting Started</h4>
 </div>
   
 ---
