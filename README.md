@@ -18,6 +18,7 @@ Mark your git commits, to create global consensus, and a definitive project hist
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/solidpayorg/git-mark/blob/gh-pages/LICENSE)
 ![npm](https://img.shields.io/npm/v/gitmark)
 [![npm](https://img.shields.io/npm/dw/gitmark.svg)](https://npmjs.com/package/gitmark)
+[![Github Stars](https://img.shields.io/github/stars/solidpayorg/git-mark.svg)](https://github.com/solidpayorg/git-mark/)
   
   
 ## Introduction
