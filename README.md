@@ -89,7 +89,7 @@ _Warning: do not use the default private key, that is set, in the script!_
 
 Git mark will generate a new address to send to, a fee, an amount, a spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory. Future versions will use a transaction builder to send to a network directly
 
-After running this script, an empty commit message is generated which you can check in, and points to the latest new unspent transaction, creating a two way link
+After running this script, an empty commit message is generated which you can check in, and points to the latest new unspent transaction, creating a two way link.  The commit message is a gitmark [URI](./URI.md)
 
 Congratulations! You have now marked your first git repo!
 
