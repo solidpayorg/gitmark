@@ -22,6 +22,8 @@ https://project-bitmark.github.io/brain/
 
 Use a very secure password for anything more than testing
 
+Once you have an address, send some coins there from a faucet, a friend, or by being marked
+
 The genesis id also doubles as the @id for a gitmark project
 
 Optionally it can be added a file, `gitmark.json` in the root directory of your repo
