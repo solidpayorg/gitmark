@@ -24,15 +24,21 @@
 
 7. Commit gitmark.json
 
-8. Run 
+8. Run:
 ```
 git mark --genesis <txid:output>
 ```
 
-9. Send the produced tx
+9. Run the produced command to create a new tx
 
-10. If successful you will get a tx output which can be used in a tag or
+10. If successful you will get a tx output which can be used in a tag or in a new commit message: 
 
-11. git commit --allow-empty "<txid:output>
+```
+git commit --allow-empty "<txid:output>
+```
 
-You are done, you can now continue git marking as your project grows, and also push to whatever remotes that you have
+You are done! 
+
+You can now continue git marking as your project grows, and also push to whatever remotes that you have
+
+Full workflow is here for illustration.  Some or all of these steps can be automated, to make it a one click process
