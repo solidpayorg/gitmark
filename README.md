@@ -93,6 +93,8 @@ After running this script, an empty commit message is generated which you can ch
 
 Congratulations! You have now marked your first git repo!
 
+See also: [Example Workflow](./WORKFLOW.md)
+
 ## How it works
 
 Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. The current git hash is added to the original, genesis, public key in the output transaction, creating a chain of commits in the block chain
