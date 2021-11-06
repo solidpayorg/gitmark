@@ -1,0 +1,24 @@
+#!/usr/bin/env node
+
+// USAGE: git-mark [privkeyhex] [$(git rev-parse HEAD)]
+
+// IMPORTS
+const bitcoin = require('bitcoinjs-lib')
+const tiny = require('tiny-secp256k1')
+const argv = require('minimist')(process.argv.slice(2))
+const gitlog = require('gitlog').default
+const fs = require('fs')
+const homedir = require('os').homedir()
+const exec = require('child_process').exec
+const execSync = require('child_process').execSync
+
+// MODEL
+
+try {
+  var username = execSync('git config user2.name')?.toString()?.replace('\n', '')
+} catch {
+  console.error('did not find secret in config')
+}
+
+console.log(username)
+

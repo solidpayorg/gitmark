@@ -10,6 +10,7 @@ const gitlog = require('gitlog').default
 const fs = require('fs')
 const homedir = require('os').homedir()
 const exec = require('child_process').exec
+const execSync = require('child_process').execSync
 
 // MODEL
 // default privkey = brain for urn:json:bitmark
@@ -68,6 +69,13 @@ function getPrivKey() {
 }
 
 // INIT
+try {
+  var secret = execSync('git config gitmark.secret')?.toString()?.replace('\n', '')
+} catch (e) {
+  console.error(e)
+  console.error('did not find secret in config')
+}
+
 let NETWORK = require('../lib/networks.js').BITMARK
 if (process.env.NETWORK) {
   NETWORK = require('../lib/networks.js')[process.env.NETWORK] || NETWORK
@@ -78,7 +86,7 @@ const commits = gitlog(options)
 var head = commits[0].hash
 console.log('current head', head)
 
-data.privkey = argv._[0] || getPrivKey() || data.privkey
+data.privkey = argv._[0] || secret || getPrivKey() || data.privkey
 data.hash = argv._[1] || head || data.hash
 data.genesis = argv.genesis || data.genesis
 
