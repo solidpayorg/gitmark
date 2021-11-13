@@ -116,13 +116,28 @@ console.log('faucet', data.faucet)
 // add to faucet
 console.log('type', address, 'into', data.faucet, 'and wait for tx to get in a block or try')
 console.log(`curl http://gitmark.me/?${address}`)
+console.log(`curl http://gitmark.me/webcredits/webledger.json`)
 
 // todo get tx value
+var cmd = `sleep 0.4 ; curl ${data.faucet}/webcredits/webledger.json`
+var ledger = JSON.parse($(cmd).toString())
+console.log(ledger)
 
 // todo print to screen
+function findValueByPrefix(object, prefix) {
+  for (var property in object) {
+    if (object.hasOwnProperty(property) &&
+      property.toString().startsWith(prefix)) {
+      return property.split(':')[1];
+    }
+  }
+}
+
+var tx = findValueByPrefix(ledger, "txo:");
+console.log('tx', tx)
 
 // create gitmark.json
 console.log('create gitmark.json and check in files')
 
 // git mark genesis
-console.log('run git mark --genesis tx')
+console.log('git mark --genesis ', tx)
