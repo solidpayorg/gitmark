@@ -103,13 +103,19 @@ var { address } = bitcoin.payments.p2pkh({
 console.log('pubkey address computed from private', address)
 
 // todo: put all in config, if not there
+console.log('run')
+console.log(`git config gitmark.secret ${data.secret}`)
+console.log(`git config gitmark.address ${address}`)
+console.log(`git config gitmark.sshkey ${data.sshkey}`)
+console.log(`git config gitmark.salt pwd`)
 
 
 // get faucet
 console.log('faucet', data.faucet)
 
 // add to faucet
-console.log('type', address, 'into', data.faucet, 'and wait for tx to get in a block')
+console.log('type', address, 'into', data.faucet, 'and wait for tx to get in a block or try')
+console.log(`curl http://gitmark.me/?${address}`)
 
 // todo get tx value
 
