@@ -76,7 +76,7 @@ function getNewSecret() {
 
 // get secret
 // generate secret if none
-if (data.secret) {
+if (!data.secret) {
   console.log('no secret found')
   var newsecret = getNewSecret()
   console.log('newsecret', newsecret)
