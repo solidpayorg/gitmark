@@ -57,58 +57,66 @@ console.log('data', data)
 
 // MAIN
 // check if already init
+console.log('checking if init already')
+// how
+// config
+// gitmark.json
+// commits
+
+function getNewSecret() {
+  try {
+    var sshkey = `$HOME/.ssh/id_rsa`
+    var cmd = `pwd | ssh-keygen -Y sign -f ${sshkey} -n gitmark - | sha256sum | head -c 64`
+    var newSecret = $(cmd).toString()
+    return newSecret
+  } catch {
+
+  }
+}
 
 // get secret
-if (!data.secret) {
-  var gen = $(`git config gitmark.secret $(git config--get remote.origin.url | ssh - keygen - Y sign - f ~/.ssh/id_rsa - n gitmark - | sha256sum | head - c 40)`)
-  console.log(gen)
+// generate secret if none
+if (data.secret) {
+  console.log('no secret found')
+  var newsecret = getNewSecret()
+  console.log('newsecret', newsecret)
+  data.secret = newsecret
+
+
+  // var gen = $(`git config gitmark.secret $(git config--get remote.origin.url | ssh - keygen - Y sign - f ~/.ssh/id_rsa - n gitmark - | sha256sum | head - c 40)`)
+  // console.log(gen)
 
 }
 
-// generate secret if none
+console.log('using secret', data.secret)
 
 // generate address from secret
 const POINT = Buffer.from(data.secret, 'hex')
-
-
-
-// put all in config, if not there
-
-
-// get faucet
-
-// if new add to faucet
-
-// get tx value
-
-// print to screen
-
-// create gitmark.json
-
-// git mark genesis
-
-
-// OLD
-// priv keys
-const b1 = BigInt('0x' + data.secret)
-
-// pub keys
 var keyPair1 = bitcoin.ECPair.fromPrivateKey(POINT)
-
-
-// print pub keys
 console.log('public keys hex buffer')
 console.log(keyPair1.publicKey)
-
-// print priv keys
 console.log('private keys hex')
-console.log(b1.toString(16))
-
-// address from priv key addition
 var { address } = bitcoin.payments.p2pkh({
   pubkey: keyPair1.publicKey,
   network: NETWORK
 })
 console.log('pubkey address computed from private', address)
 
+// todo: put all in config, if not there
 
+
+// get faucet
+console.log('faucet', data.faucet)
+
+// add to faucet
+console.log('type', address, 'into', data.faucet, 'and wait for tx to get in a block')
+
+// todo get tx value
+
+// todo print to screen
+
+// create gitmark.json
+console.log('create gitmark.json and check in files')
+
+// git mark genesis
+console.log('run git mark --genesis tx')
