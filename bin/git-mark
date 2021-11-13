@@ -10,6 +10,7 @@ const gitlog = require('gitlog').default
 const fs = require('fs')
 const homedir = require('os').homedir()
 const exec = require('child_process').exec
+const $ = require('child_process').execSync
 const execSync = require('child_process').execSync
 
 // MODEL
@@ -176,7 +177,6 @@ var { address } = bitcoin.payments.p2pkh({
 })
 console.log('address computed from public', address)
 
-var fee = 1000
 var tx
 const gitmarkTxBase = homedir + '/.gitmark/tx'
 
@@ -185,6 +185,7 @@ try {
     tx = { total_output: '1', fees: '0.00001' }
   } else {
     tx = require(gitmarkTxBase + '/' + lastCommit[0] + '.json')
+    if (!tx.total_output) tx.total_output = tx.vout[0].value
   }
 } catch (e) {
   console.error(e)
@@ -198,14 +199,21 @@ try {
     '.json'
   )
   console.log('trying:')
-  var command = `curl "https://chainz.cryptoid.info/marks/api.dws?q=txinfo&t=${lastCommit[0]}" > ${gitmarkTxBase}/${lastCommit[0]}.json`
+  var explorerURI = $('git config gitmark.explorer || true').toString()?.replace('\n', '') || 'https://chainz.cryptoid.info/marks/api.dws?q=txinfo&t='
+
+  explorerURI = 'http://gitmark.me/'
+  var command = `curl "${explorerURI}${lastCommit[0]}.json" > ${gitmarkTxBase}/${lastCommit[0]}.json`
   console.log(command)
-  exec(command, console.log)
-  console.log('do not run more than once per 10s')
-  process.exit(-1)
+  $(command)
+  tx = JSON.parse(fs.readFileSync(gitmarkTxBase + '/' + lastCommit[0] + '.json').toString())
+  if (!tx.total_output) tx.total_output = tx.vout[0].value
+  // console.log('tx', tx)
+  // console.log('do not run more than once per 10s')
+  // process.exit(-1)
 }
 
-var nextfee = tx.total_output - tx.fees
+var fee = tx?.fees || 0.00001
+var nextfee = tx.total_output - fee
 nextfee = Math.round((nextfee + Number.EPSILON) * 100000000) / 100000000
 
 var priv = data.genesis ? b1 : b5
