@@ -1,0 +1,114 @@
+#!/usr/bin/env node
+
+// USAGE: git-mark [privkeyhex] [$(git rev-parse HEAD)]
+
+// IMPORTS
+const bitcoin = require('bitcoinjs-lib')
+const tiny = require('tiny-secp256k1')
+const argv = require('minimist')(process.argv.slice(2))
+const gitlog = require('gitlog').default
+const fs = require('fs')
+const homedir = require('os').homedir()
+const exec = require('child_process').exec
+const $ = require('child_process').execSync
+const execSync = require('child_process').execSync
+
+// MODEL
+// default privkey = brain for urn:json:bitmark
+globalThis.data = {
+  address: null,
+  sshkey: '$HOME/.ssh/id_rsa',
+  salt: null,
+  secret: null,
+  genesistxo: null,
+  faucet: 'http://faucet.gitmark.me/'
+}
+
+// FUNCTIONS
+function getConfig(key) {
+  try {
+    var cmd = `git config ${key}`
+    var secret = execSync(cmd)?.toString()?.replace('\n', '')
+    return secret
+  } catch (e) {
+  }
+}
+
+function init(str) {
+  return argv[str] || getConfig('gitmark.' + str) || data[str]
+}
+
+// INIT
+let NETWORK = require('../lib/networks.js').BITMARK
+if (process.env.NETWORK) {
+  NETWORK = require('../lib/networks.js')[process.env.NETWORK] || NETWORK
+}
+console.log('NETWORK', NETWORK)
+
+data.address = init('address')
+data.sshkey = init('sshkey')
+data.salt = init('salt')
+data.secret = init('secret')
+data.genesistxo = init('genesistxo')
+data.faucet = init('faucet')
+
+
+console.log('data', data)
+
+// MAIN
+// check if already init
+
+// get secret
+if (!data.secret) {
+  var gen = $(`git config gitmark.secret $(git config--get remote.origin.url | ssh - keygen - Y sign - f ~/.ssh/id_rsa - n gitmark - | sha256sum | head - c 40)`)
+  console.log(gen)
+
+}
+
+// generate secret if none
+
+// generate address from secret
+const POINT = Buffer.from(data.secret, 'hex')
+
+
+
+// put all in config, if not there
+
+
+// get faucet
+
+// if new add to faucet
+
+// get tx value
+
+// print to screen
+
+// create gitmark.json
+
+// git mark genesis
+
+
+// OLD
+// priv keys
+const b1 = BigInt('0x' + data.secret)
+
+// pub keys
+var keyPair1 = bitcoin.ECPair.fromPrivateKey(POINT)
+
+
+// print pub keys
+console.log('public keys hex buffer')
+console.log(keyPair1.publicKey)
+
+// print priv keys
+console.log('private keys hex')
+console.log(b1.toString(16))
+
+// address from priv key addition
+var { address } = bitcoin.payments.p2pkh({
+  pubkey: keyPair1.publicKey,
+  network: NETWORK
+})
+console.log('pubkey address computed from private', address)
+
+
