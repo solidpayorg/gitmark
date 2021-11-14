@@ -4,7 +4,7 @@ var WebSocket = require('ws');
 
 var secret = process.env['SECRET'] || 's'
 
-var uri = process.argv[2] || 'ws://localhost:4444'
+var uri = process.argv[3] || 'ws://localhost:4444'
 
 const ws = new WebSocket(uri)
 
