@@ -1,6 +1,6 @@
 {
   "name": "gitmark",
-  "version": "0.0.40",
+  "version": "0.0.41",
   "description": "gitmark",
   "main": "index.js",
   "scripts": {
@@ -29,6 +29,7 @@
     "fs": "^0.0.1-security",
     "gitlog": "^4.0.4",
     "minimist": "^1.2.5",
-    "tiny-secp256k1": "^1.1.6"
+    "tiny-secp256k1": "^1.1.6",
+    "ws": "^8.2.3"
   }
 }
