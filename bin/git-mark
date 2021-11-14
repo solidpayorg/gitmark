@@ -258,7 +258,7 @@ console.log(txcommand)
 
 if (txexe && argv.send) {
   console.log('auto send tx detected ... trying:')
-  var newtx = $(txcommand)
+  var newtx = $(txexe + ' ' + txcommand)
   console.log(newtx)
 }
 
