@@ -17,7 +17,8 @@ const execSync = require('child_process').execSync
 globalThis.data = {
   privkey: '132e7465a63e30a74c5b0deae3573033319e9de18a84878613eaa21878b2b56b',
   hash: 'b3e8f5735849af7f18a13ead08532043a7f82153',
-  genesis: null
+  genesis: null,
+  branch: 'gh-pages'
 }
 
 // FUNCTIONS
@@ -261,12 +262,12 @@ if (txexe && argv.send) {
   console.log('newtx', newtx?.toString(), 'length', newtx?.toString().length)
 
   console.log('git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"')
-  console.log('git push origin gh-pages')
+  console.log(`git push origin ${data.branch}`)
 
 
   if (argv.commit && newtx.toString().length === 64) {
     console.log('committing')
     $('git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"')
-    $('git push origin gh-pages')
+    $(`git push origin ${data.branch}`)
   }
 }
