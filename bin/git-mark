@@ -25,10 +25,11 @@ globalThis.data = {
 function getConfig(key) {
   try {
     var cmd = `git config ${key}`
-    var secret = execSync(cmd)?.toString()?.replace('\n', '')
+    var secret = execSync(cmd)
+      ?.toString()
+      ?.replace('\n', '')
     return secret
-  } catch (e) {
-  }
+  } catch (e) { }
 }
 
 const options = {
@@ -80,7 +81,9 @@ function getPrivKey() {
 
 // INIT
 try {
-  var secret = execSync('git config gitmark.secret')?.toString()?.replace('\n', '')
+  var secret = execSync('git config gitmark.secret')
+    ?.toString()
+    ?.replace('\n', '')
 } catch (e) {
   console.error(e)
   console.error('did not find secret in config')
@@ -208,13 +211,19 @@ try {
     '.json'
   )
   console.log('trying:')
-  var explorerURI = $('git config gitmark.explorer || true').toString()?.replace('\n', '') || 'https://chainz.cryptoid.info/marks/api.dws?q=txinfo&t='
+  var explorerURI =
+    $('git config gitmark.explorer || true')
+      .toString()
+      ?.replace('\n', '') ||
+    'https://chainz.cryptoid.info/marks/api.dws?q=txinfo&t='
 
   explorerURI = 'http://gitmark.me/'
   var command = `curl "${explorerURI}${lastCommit[0]}.json" > ${gitmarkTxBase}/${lastCommit[0]}.json`
   console.log(command)
   $(command)
-  tx = JSON.parse(fs.readFileSync(gitmarkTxBase + '/' + lastCommit[0] + '.json').toString())
+  tx = JSON.parse(
+    fs.readFileSync(gitmarkTxBase + '/' + lastCommit[0] + '.json').toString()
+  )
   if (!tx.total_output) tx.total_output = tx.vout[0].value
   // console.log('tx', tx)
   // console.log('do not run more than once per 10s')
@@ -253,7 +262,8 @@ console.log(`signrawtransaction ${hex} null '["${keyPair1.toWIF()}"]'`)
 console.log('sendrawtransaction')
 
 var txexe = getConfig('gitmark.txexe')
-var txcommand = `bin/tx.sh ${lastCommit[0]} ${lastCommit[1]} ${address} ${nextfee} ${keyPair1.toWIF()}`
+var txcommand = `bin/tx.sh ${lastCommit[0]} ${lastCommit[1]
+  } ${address} ${nextfee} ${keyPair1.toWIF()}`
 console.log(txcommand)
 
 if (txexe && argv.send) {
@@ -261,9 +271,10 @@ if (txexe && argv.send) {
   var newtx = $(txexe + ' ' + txcommand)
   console.log('newtx', newtx?.toString(), 'length', newtx?.toString().length)
 
-  console.log('git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"')
+  console.log(
+    'git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"'
+  )
   console.log(`git push origin ${data.branch}`)
-
 
   if (argv.commit && newtx.toString().length === 64) {
     console.log('committing')
