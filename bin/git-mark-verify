@@ -38,7 +38,7 @@ const options = {
   fields: ['hash', 'subject']
 }
 
-function getPrivKey () {
+function getPrivKey() {
   try {
     const fetchHeadDir = './.git/'
     var fetchHeadFile = fetchHeadDir + 'FETCH_HEAD'
@@ -82,9 +82,9 @@ if (commits.length === 1) {
 }
 
 console.log('Genesis tx need not be verified\n')
-for (var i = commits.length-1; i >= 0; i--) {
+for (var i = commits.length - 1; i >= 0; i--) {
   var subject = commits[i].subject
-  if (subject.match(/^gitmark/)) {
+  if (subject.match(/^gitmark[: ]/)) {
     var hash = commits[i + 1].hash
     console.log()
     console.log(subject)
@@ -106,8 +106,8 @@ for (var i = commits.length-1; i >= 0; i--) {
 
     console.log(
       'https://chainz.cryptoid.info/marks/tx.dws?' +
-        subject.split(' ')[1].split(':')[0] +
-        '.htm'
+      subject.split(' ')[1].split(':')[0] +
+      '.htm'
     )
   }
 }
