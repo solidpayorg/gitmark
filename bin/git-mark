@@ -256,7 +256,6 @@ var txexe = getConfig('gitmark.txexe')
 var txcommand = `bin/tx.sh ${lastCommit[0]} ${lastCommit[1]} ${address} ${nextfee} ${keyPair1.toWIF()}`
 console.log(txcommand)
 
-console.log(argv)
 if (txexe && argv.send) {
   console.log('auto send tx detected ... trying:')
   var newtx = $(txcommand)
