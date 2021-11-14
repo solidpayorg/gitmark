@@ -259,6 +259,12 @@ console.log(txcommand)
 if (txexe && argv.send) {
   console.log('auto send tx detected ... trying:')
   var newtx = $(txexe + ' ' + txcommand)
-  console.log('git commit --allow-empty -m' + ' ' + newtx.toString())
+  console.log('git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"')
   console.log('git push origin gh-pages')
+
+  if (argv.commit && newtx.toString().length === 64) {
+    console.log('committing')
+    $('git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() '"')
+    $('git push origin gh-pages')
+  }
 }
