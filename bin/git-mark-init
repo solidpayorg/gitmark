@@ -139,6 +139,14 @@ console.log('tx', tx)
 
 // create gitmark.json
 console.log('create gitmark.json and check in files')
+console.log(`{
+  "@id": "gitmark:${tx}:1",
+  "genesis": "gitmark:${tx}:1",
+  "nick": "gitmark",
+  "package": "./package.json",
+  "repository": "./"
+}`)
+
 
 // git mark genesis
 console.log('git mark --genesis ', tx)
