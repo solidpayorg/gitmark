@@ -22,6 +22,15 @@ globalThis.data = {
 }
 
 // FUNCTIONS
+function getConfig(key) {
+  try {
+    var cmd = `git config ${key}`
+    var secret = execSync(cmd)?.toString()?.replace('\n', '')
+    return secret
+  } catch (e) {
+  }
+}
+
 const options = {
   repo: './',
   fields: ['subject', 'authorName', 'authorDate'],
@@ -242,7 +251,15 @@ var hex = `1234`
 // console.log('signrawtransaction', keyPair1.toWIF())
 console.log(`signrawtransaction ${hex} null '["${keyPair1.toWIF()}"]'`)
 console.log('sendrawtransaction')
-console.log(
-  `bin/tx.sh ${lastCommit[0]} ${lastCommit[1]
-  } ${address} ${nextfee} ${keyPair1.toWIF()}`
-)
+
+var txexe = getConfig('gitmark.txexe')
+var txcommand = `bin/tx.sh ${lastCommit[0]} ${lastCommit[1]} ${address} ${nextfee} ${keyPair1.toWIF()}`
+console.log(txcommand)
+
+console.log(argv)
+if (txexe && argv.send) {
+  console.log('auto send tx detected ... trying:')
+  var newtx = $(txcommand)
+  console.log(newtx)
+}
+
