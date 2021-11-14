@@ -107,7 +107,7 @@ data.genesis = argv.genesis || data.genesis
 console.log('data', data)
 
 var lastCommit = commits.filter(i => {
-  return i.subject.match(/^gitmark/)
+  return i.subject.match(/^gitmark[ :]/)
 })
 if (lastCommit && lastCommit[0] && lastCommit[0].subject) {
   lastCommit = lastCommit[0].subject
