@@ -264,7 +264,7 @@ if (txexe && argv.send) {
 
   if (argv.commit && newtx.toString().length === 64) {
     console.log('committing')
-    $('git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() '"')
+    $('git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"')
     $('git push origin gh-pages')
   }
 }
