@@ -111,8 +111,8 @@ var lastCommit = commits.filter(i => {
 })
 if (lastCommit && lastCommit[0] && lastCommit[0].subject) {
   lastCommit = lastCommit[0].subject
-  lastCommit = lastCommit.split(' ').pop()
-  lastCommit = lastCommit.split(':')
+  lastCommit = lastCommit.split(/[: ]/).splice(1, 1)
+  // lastCommit = lastCommit.split(':')
   console.log('lastCommit', lastCommit)
 } else {
   console.log('New repo, set up first gitmark')
