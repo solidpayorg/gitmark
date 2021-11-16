@@ -19,7 +19,8 @@ globalThis.data = {
   hash: 'b3e8f5735849af7f18a13ead08532043a7f82153',
   genesis: null,
   branch: 'gh-pages',
-  notify: 'http://gitmark.me:4444'
+  notify: 'http://gitmark.me:4444',
+  sign: false
 }
 
 // FUNCTIONS
@@ -103,6 +104,7 @@ console.log('current head', head)
 data.privkey = argv._[0] || secret || getPrivKey() || data.privkey
 data.hash = argv._[1] || head || data.hash
 data.genesis = argv.genesis || data.genesis
+data.sign = argv.S || data.sign
 
 console.log('data', data)
 
@@ -279,7 +281,12 @@ if (txexe && argv.send) {
 
   if (argv.commit && newtx.toString().length === 64) {
     console.log('committing')
-    $('git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"')
+    if (data.sign) {
+      var cmd = 'git commit --allow-empty -S -m' + ' "gitmark ' + newtx.toString() + '"'
+    } else {
+      var cmd = 'git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"'
+    }
+    $(cmd)
     $(`git push origin ${data.branch}`)
 
     if (argv.notify) {
