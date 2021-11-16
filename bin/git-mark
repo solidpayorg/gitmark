@@ -285,9 +285,9 @@ if (txexe && argv.send) {
     console.log('tagging with', newtx.toString())
     if (data.sign) {
       var vout = '-0000'
-      var cmd = 'git tag -a -s -m' + ' "' + newtx.toString() + '-0000"'
+      var cmd = 'git tag -m "gitmark" -s -a' + ' "' + newtx.toString() + '-0000"'
     } else {
-      var cmd = 'git tag -a -m' + ' "' + newtx.toString() + '-0000"'
+      var cmd = 'git tag -m "gitmark" -a' + ' "' + newtx.toString() + '-0000"'
     }
   }
 
