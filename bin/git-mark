@@ -20,7 +20,8 @@ globalThis.data = {
   genesis: null,
   branch: 'gh-pages',
   notify: 'http://gitmark.me:4444',
-  sign: false
+  sign: false,
+  tag: false
 }
 
 // FUNCTIONS
@@ -105,6 +106,7 @@ data.privkey = argv._[0] || secret || getPrivKey() || data.privkey
 data.hash = argv._[1] || head || data.hash
 data.genesis = argv.genesis || data.genesis
 data.sign = argv.S || data.sign
+data.tag = argv.tag || data.tag
 
 console.log('data', data)
 
@@ -275,16 +277,26 @@ if (txexe && argv.send) {
   console.log('newtx', newtx?.toString(), 'length', newtx?.toString().length)
 
   console.log(
-    'git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"'
+    'git commit --allow-empty -m' + ' "gitmark:' + newtx.toString() + '"'
   )
   console.log(`git push origin ${data.branch}`)
+
+  if (data.tag) {
+    console.log('tagging with', newtx.toString())
+    if (data.sign) {
+      var vout = '-0000'
+      var cmd = 'git tag -a -s -m' + ' "' + newtx.toString() + '-0000"'
+    } else {
+      var cmd = 'git tag -a -m' + ' "' + newtx.toString() + '-0000"'
+    }
+  }
 
   if (argv.commit && newtx.toString().length === 64) {
     console.log('committing')
     if (data.sign) {
-      var cmd = 'git commit --allow-empty -S -m' + ' "gitmark ' + newtx.toString() + '"'
+      var cmd = 'git commit --allow-empty -S -m' + ' "gitmark:' + newtx.toString() + '"'
     } else {
-      var cmd = 'git commit --allow-empty -m' + ' "gitmark ' + newtx.toString() + '"'
+      var cmd = 'git commit --allow-empty -m' + ' "gitmark:' + newtx.toString() + '"'
     }
     $(cmd)
     $(`git push origin ${data.branch}`)
