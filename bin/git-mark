@@ -199,7 +199,7 @@ const gitmarkTxBase = homedir + '/.gitmark/tx'
 
 try {
   if (data.genesis) {
-    tx = { total_output: '1', fees: '0.00001' }
+    tx = { total_output: '0.1', fees: '0.00001' }
   } else {
     tx = require(gitmarkTxBase + '/' + lastCommit[0] + '.json')
     if (!tx.total_output) tx.total_output = tx.vout[0].value
