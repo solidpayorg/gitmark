@@ -106,8 +106,7 @@ for (var i = commits.length - 1; i >= 0; i--) {
 
     console.log(
       'https://chainz.cryptoid.info/marks/tx.dws?' +
-      subject.split(' ')[1].split(':')[0] +
-      '.htm'
+      subject.split(/[: ]/)[1] + '.htm'
     )
   }
 }
