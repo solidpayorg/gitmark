@@ -102,6 +102,11 @@ const commits = gitlog(options)
 var head = commits[0].hash
 console.log('current head', head)
 
+if (argv._[0] === 'init') {
+  console.log($('./bin/git-mark-init').toString())
+  process.exit(0)
+}
+
 data.privkey = argv._[0] || secret || getPrivKey() || data.privkey
 data.hash = argv._[1] || head || data.hash
 data.genesis = argv.genesis || data.genesis
