@@ -3,5 +3,7 @@
   "genesis": "gitmark:59ff24db0321cb6b32a404815345b00ae68ca8b81150fbea6464ee10557e0fae:1",
   "nick": "gitmark",
   "package": "./package.json",
+  "created_at": 1618076262,
+  "pubkey": "7574866ae7653e084c3c8e9e6359660e2c728d249fefb0f984bd32393f2ac67f",
   "repository": "./"
 }
