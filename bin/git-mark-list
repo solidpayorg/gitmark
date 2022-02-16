@@ -48,7 +48,7 @@ function renderCommit(commit, type) {
     canon = JSON.stringify(canon)
     var id = sha256(canon)
 
-    console.log(canon)
+    // console.log(canon)
 
     // sign
 
@@ -95,6 +95,7 @@ function getPrivKey() {
 
 // INIT
 data.privkey = argv._[0] || getPrivKey() || data.privkey
+data.count = argv.count
 
 var POINT = Buffer.from(data.privkey, 'hex')
 
@@ -119,7 +120,9 @@ var genesisCommit = {
 }
 // console.log('genesis', genesis)
 // console.log('genesisCommit', genesisCommit)
-renderCommit(genesisCommit, 'nostr')
+if (!data.count) {
+  renderCommit(genesisCommit, 'nostr')
+}
 
 // get commits
 const commits = gitlog(options)
@@ -130,6 +133,7 @@ if (commits.length === 1) {
 
 // traverse backwards
 // console.log('Genesis tx need not be verified\n')
+var done = 0
 for (var i = commits.length - 1; i >= 0; i--) {
   var commit = {}
   commit.subject = commits[i].subject
@@ -172,7 +176,9 @@ for (var i = commits.length - 1; i >= 0; i--) {
     commit.verify = `https://gitmark.info/${commit.subject.split(/[: ]/)[1]}`
 
     renderCommit(commit, 'nostr')
+    done++
     // console.log(commit)
+    if (data.count && done >= data.count) break
   }
 }
 
