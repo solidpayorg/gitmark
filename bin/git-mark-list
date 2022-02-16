@@ -41,7 +41,45 @@ const options = {
   fields: ['hash', 'subject', 'authorDate']
 }
 
+function addCryptoToCommit(commit) {
+  b2 = BigInt('0x' + commit.hash)
+  b3 = BigInt.asUintN(256, b1 + b2)
+  commit.privkey = b1.toString(16)
+  commit.tweakedkey = b3.toString(16)
+  // console.log('original private key', b3.toString(16))
+  // console.log('tweaked private key', b3.toString(16))
+  var keyPair1 = bitcoin.ECPair.fromPrivateKey(
+    Buffer.from(b1.toString(16), 'hex'),
+    { network: BITMARK }
+  )
+  commit.wifkey = keyPair1.toWIF()
+
+  function buf2hex(buffer) {
+    // buffer is an ArrayBuffer
+    return [...new Uint8Array(buffer)]
+      .map(x => x.toString(16).padStart(2, '0'))
+      .join('')
+  }
+
+  commit.pubkey = buf2hex(keyPair1.publicKey).substring(2)
+  // console.log('private key WIF:', keyPair1.toWIF())
+
+  var { address } = bitcoin.payments.p2pkh({
+    pubkey: keyPair1.publicKey,
+    network: BITMARK
+  })
+  commit.address = address
+  // console.log('verify address computed from private key:', address)
+
+  commit.verify = `https://gitmark.info/${commit.subject.split(/[: ]/)[1]}`
+
+  return commit
+
+}
+
+
 function renderCommit(commit, type) {
+  if (!commit) return
   if (type === 'nostr') {
     var canon = [0, commit.pubkey, commit.authorDate, 1, [], commit.hash]
 
@@ -131,55 +169,33 @@ if (commits.length === 1) {
   process.exit()
 }
 
+
+
 // traverse backwards
 // console.log('Genesis tx need not be verified\n')
 var done = 0
+var gitmarks = []
 for (var i = commits.length - 1; i >= 0; i--) {
-  var commit = {}
-  commit.subject = commits[i].subject
 
-  if (commit.subject.match(/^gitmark[: ][A-Fa-f0-9]/)) {
-    commit.hash = commits[i + 1].hash
-    commit.authorDate = Math.floor(
-      new Date(commits[i].authorDate).getTime() / 1000
-    )
-    // console.log()
-    b2 = BigInt('0x' + commit.hash)
-    b3 = BigInt.asUintN(256, b1 + b2)
-    commit.privkey = b1.toString(16)
-    commit.tweakedkey = b3.toString(16)
-    // console.log('original private key', b3.toString(16))
-    // console.log('tweaked private key', b3.toString(16))
-    var keyPair1 = bitcoin.ECPair.fromPrivateKey(
-      Buffer.from(b1.toString(16), 'hex'),
-      { network: BITMARK }
-    )
-    commit.wifkey = keyPair1.toWIF()
+  if (commits[i].subject.match(/^gitmark[: ][A-Fa-f0-9]/)) {
 
-    function buf2hex(buffer) {
-      // buffer is an ArrayBuffer
-      return [...new Uint8Array(buffer)]
-        .map(x => x.toString(16).padStart(2, '0'))
-        .join('')
+    var commit = {
+      hash: commits[i + 1]?.hash,
+      subject: commits[i].subject,
+      authorDate: Math.floor(new Date(commits[i].authorDate).getTime() / 1000),
+      privkey: b1.toString(16)
     }
-
-    commit.pubkey = buf2hex(keyPair1.publicKey).substring(2)
-    // console.log('private key WIF:', keyPair1.toWIF())
-
-    var { address } = bitcoin.payments.p2pkh({
-      pubkey: keyPair1.publicKey,
-      network: BITMARK
-    })
-    commit.address = address
-    // console.log('verify address computed from private key:', address)
-
-    commit.verify = `https://gitmark.info/${commit.subject.split(/[: ]/)[1]}`
-
-    renderCommit(commit, 'nostr')
-    done++
+    commit = addCryptoToCommit(commit)
     // console.log(commit)
-    if (data.count && done >= data.count) break
+    gitmarks.push(commit)
+
   }
 }
 
 
+gitmarks = gitmarks.reverse()
+var len = data.count || gitmarks.length
+for (var i = 0; i < len; i++) {
+  // console.log(gitmarks[i])
+  renderCommit(gitmarks[i], 'nostr')
+}
