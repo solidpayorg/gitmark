@@ -37,11 +37,13 @@ const options = {
   repo: './',
   fields: ['subject', 'authorName', 'authorDate'],
   execOptions: { maxBuffer: 1000 * 1024 },
-  number: 1000,
+  number: 1000000,
   fields: ['hash', 'subject', 'authorDate']
 }
 
 function addCryptoToCommit(commit) {
+  // console.log('commit', commit)
+  if (!commit.hash) return
   b2 = BigInt('0x' + commit.hash)
   b3 = BigInt.asUintN(256, b1 + b2)
   commit.privkey = b1.toString(16)
