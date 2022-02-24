@@ -91,7 +91,7 @@ function renderCommit(commit, type) {
     // console.log(canon)
 
     // sign
-
+    const KIND_CODE = 17
 
     const privateKeyHex = commit.privkey
     const message = Buffer.from(id, 'hex')
@@ -101,7 +101,7 @@ function renderCommit(commit, type) {
     // console.log(sig)
     // var sig = 1
 
-    var event = `["EVENT",{"id":"${id}","pubkey":"${commit.pubkey}","created_at":${commit.authorDate},"kind":1,"tags":[],"content":"${commit.hash}","sig":"${sig}"}]`
+    var event = `["EVENT",{"id":"${id}","pubkey":"${commit.pubkey}","created_at":${commit.authorDate},"kind":${KIND_CODE},"tags":[],"content":"${commit.hash}","sig":"${sig}"}]`
 
     console.log(event)
   } else {
