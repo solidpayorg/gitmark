@@ -21,7 +21,8 @@ globalThis.data = {
   branch: 'gh-pages',
   notify: 'http://gitmark.me:4444',
   sign: false,
-  tag: false
+  tag: false,
+  exodus: false
 }
 
 // FUNCTIONS
@@ -112,6 +113,8 @@ data.hash = argv._[1] || head || data.hash
 data.genesis = argv.genesis || data.genesis
 data.sign = argv.S || data.sign
 data.tag = argv.tag || data.tag
+data.exodus = argv.exodus || data.exodus
+
 
 console.log('data', data)
 
@@ -184,6 +187,15 @@ console.log(b2.toString(16))
 console.log(b3.toString(16))
 console.log(b4.toString(16))
 console.log(b5.toString(16))
+
+// address from priv key addition
+var { address } = bitcoin.payments.p2pkh({
+  pubkey: keyPair1.publicKey,
+  network: NETWORK
+})
+console.log('initial address computed from private', address)
+var genesisAddress = address
+
 
 // address from priv key addition
 var { address } = bitcoin.payments.p2pkh({
@@ -272,6 +284,9 @@ console.log(`signrawtransaction ${hex} null '["${keyPair1.toWIF()}"]'`)
 console.log('sendrawtransaction')
 
 var txexe = getConfig('gitmark.txexe')
+if (data.exodus) {
+  address = genesisAddress
+}
 var txcommand = `bin/tx.sh ${lastCommit[0]} ${lastCommit[1]
   } ${address} ${nextfee} ${keyPair1.toWIF()}`
 console.log(txcommand)
