@@ -83,12 +83,12 @@ function addCryptoToCommit(commit) {
 function renderCommit(commit, type) {
   if (!commit) return
   if (type === 'nostr') {
-    var canon = [0, commit.pubkey, commit.authorDate, 1, [], commit.hash]
+    var canon = [0, commit.pubkey, commit.authorDate, 17, [], commit.hash]
 
     canon = JSON.stringify(canon)
     var id = sha256(canon)
 
-    // console.log(canon)
+    console.log(canon)
 
     // sign
     const KIND_CODE = 17
