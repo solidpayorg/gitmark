@@ -88,7 +88,7 @@ function renderCommit(commit, type) {
     canon = JSON.stringify(canon)
     var id = sha256(canon)
 
-    console.log(canon)
+    // console.log(canon)
 
     // sign
     const KIND_CODE = 17
