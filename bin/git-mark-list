@@ -84,6 +84,7 @@ function addCryptoToCommit(commit) {
 function renderCommit(commit, type) {
   if (!commit) return
   commit.tags = commit.tags || []
+  if (commit.c) commit.tags.push(["c", commit.c])
   if (type === 'nostr') {
     var canon = [0, commit.pubkey, commit.authorDate, 17, commit.tags, commit.hash]
 
@@ -139,6 +140,8 @@ function getPrivKey() {
 data.privkey = argv._[0] || getPrivKey() || data.privkey
 data.g = argv.g
 data.count = argv.count
+data.genesis = argv.genesis
+data.created_at = argv.created
 
 var POINT = Buffer.from(data.privkey, 'hex')
 
@@ -157,8 +160,9 @@ var b3
 var genesis = require('../gitmark.json')
 var genesisCommit = {
   "hash": "genesis",
-  "authorDate": genesis.created_at,
-  "privkey": b1.toString(16)
+  "authorDate": data.created_at,
+  "privkey": b1.toString(16),
+  "c": data.genesis,
 }
 var keyPair1 = bitcoin.ECPair.fromPrivateKey(
   Buffer.from(b1.toString(16), 'hex'),
@@ -197,7 +201,8 @@ for (var i = commits.length - 1; i >= 0; i--) {
       hash: commits[i + 1]?.hash,
       subject: commits[i].subject,
       authorDate: Math.floor(new Date(commits[i].authorDate).getTime() / 1000),
-      privkey: b1.toString(16)
+      privkey: b1.toString(16),
+      c: commits[i].subject
     }
     commit = addCryptoToCommit(commit)
     // console.log(commit)
