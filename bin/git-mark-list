@@ -21,6 +21,13 @@ globalThis.data = {
 // console.log('data', data)
 
 // FUNCTIONS
+function buf2hex(buffer) {
+  // buffer is an ArrayBuffer
+  return [...new Uint8Array(buffer)]
+    .map(x => x.toString(16).padStart(2, '0'))
+    .join('')
+}
+
 const BITMARK = {
   messagePrefix: '\x19BITMARK Signed Message:\n',
   bech32: 'btm',
@@ -56,12 +63,6 @@ function addCryptoToCommit(commit) {
   )
   commit.wifkey = keyPair1.toWIF()
 
-  function buf2hex(buffer) {
-    // buffer is an ArrayBuffer
-    return [...new Uint8Array(buffer)]
-      .map(x => x.toString(16).padStart(2, '0'))
-      .join('')
-  }
 
   commit.pubkey = buf2hex(keyPair1.publicKey).substring(2)
   // console.log('private key WIF:', keyPair1.toWIF())
@@ -153,11 +154,17 @@ var b3
 // genesis
 var genesis = require('../gitmark.json')
 var genesisCommit = {
-  "pubkey": genesis.pubkey,
   "hash": "genesis",
   "authorDate": genesis.created_at,
   "privkey": b1.toString(16)
 }
+var keyPair1 = bitcoin.ECPair.fromPrivateKey(
+  Buffer.from(b1.toString(16), 'hex'),
+  { network: BITMARK }
+)
+genesisCommit.pubkey = buf2hex(keyPair1.publicKey).substring(2)
+
+
 // console.log('genesis', genesis)
 // console.log('genesisCommit', genesisCommit)
 if (!data.count) {
