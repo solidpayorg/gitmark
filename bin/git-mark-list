@@ -83,10 +83,11 @@ function addCryptoToCommit(commit) {
 
 function renderCommit(commit, type) {
   if (!commit) return
+  commit.tags = commit.tags || []
   if (type === 'nostr') {
-    var canon = [0, commit.pubkey, commit.authorDate, 17, [], commit.hash]
+    var canon = [0, commit.pubkey, commit.authorDate, 17, commit.tags, commit.hash]
 
-    canon = JSON.stringify(canon)
+    canon = JSON.stringify(canon).replace(/\\"/g, '"')
     var id = sha256(canon)
 
     // console.log(canon)
@@ -102,7 +103,7 @@ function renderCommit(commit, type) {
     // console.log(sig)
     // var sig = 1
 
-    var event = `["EVENT",{"id":"${id}","pubkey":"${commit.pubkey}","created_at":${commit.authorDate},"kind":${KIND_CODE},"tags":[],"content":"${commit.hash}","sig":"${sig}"}]`
+    var event = `["EVENT",{"id":"${id}","pubkey":"${commit.pubkey}","created_at":${commit.authorDate},"kind":${KIND_CODE},"tags":${JSON.stringify(commit.tags)},"content":"${commit.hash}","sig":"${sig}"}]`
 
     console.log(event)
   } else {
@@ -136,6 +137,7 @@ function getPrivKey() {
 
 // INIT
 data.privkey = argv._[0] || getPrivKey() || data.privkey
+data.g = argv.g
 data.count = argv.count
 
 var POINT = Buffer.from(data.privkey, 'hex')
@@ -163,6 +165,9 @@ var keyPair1 = bitcoin.ECPair.fromPrivateKey(
   { network: BITMARK }
 )
 genesisCommit.pubkey = buf2hex(keyPair1.publicKey).substring(2)
+if (data.g) {
+  genesisCommit.tags = [["g", data.g]]
+}
 
 
 // console.log('genesis', genesis)
