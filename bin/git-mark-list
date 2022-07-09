@@ -157,7 +157,6 @@ var b3
 
 
 // genesis
-var genesis = require('../gitmark.json')
 var genesisCommit = {
   "hash": "genesis",
   "authorDate": data.created_at,
@@ -204,6 +203,10 @@ for (var i = commits.length - 1; i >= 0; i--) {
       privkey: b1.toString(16),
       c: commits[i].subject
     }
+    if (commit.c && commit.c.split(":").length <= 2) {
+      commit.c = commit.c + ':0'
+    }
+    commit.c = commit?.c?.replace('gitmark ', 'gitmark:')
     commit = addCryptoToCommit(commit)
     // console.log(commit)
     gitmarks.push(commit)
