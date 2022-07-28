@@ -50,12 +50,12 @@ It may look like this:
 }
 ```
 
-- **@id** is the unstpent transaction output
+- **@id** is the unspent transaction output
 - **genesis** points to the same transaction output
 - **nick** is a short name e.g. as used in npm
 - **package** points to a package.json info
 - **pubkey** is the pubkey for the genesis tx, in hex
-- **reposity** is an absolute or relative hint as to where to find the git code
+- **repository** is an absolute or relative hint as to where to find the git code
 
 
 ### First git mark
@@ -66,20 +66,20 @@ Once you have your genesis tx, you can make your first git mark by running, for 
 git mark --genesis b1fb9acb83f85887760b2e1a71e1df370976b1596be101bb0dbe8fd1c80f91cd:0
 ```
 
-Do this after you have commited your first files, and as recommended a gitmark.json file too
+Do this after you have committed your first files, and as recommended a gitmark.json file too
 
 
 ### Notes on Commits
 
-The commit requires a name, email and commit message, with opional signing.
+The commit requires a name, email and commit message, with optional signing.
 
 The **name** can be whatever you want
 
-The **email** is open, but you can select a noreply addess to indicate privacy, such as noreply@<genesis-hash>.gitmark
+The **email** is open, but you can select a noreply address to indicate privacy, such as noreply@<genesis-hash>.gitmark
   
 The **commit message** can be anything, and will be the first commit ready to be marked.  e.g. "first"
 
 ### Notes on .gitmark   
 
-The .gitmark address is just a place holder if it is undesirable to enter a public email address.  In future it may be possible to resolve .gitmark urls to a working github repository and deployments
+The .gitmark address is just a place holder if it is undesirable to enter a public email address.  In future it may be possible to resolve .gitmark URLs to a working GitHub repository and deployments
   
