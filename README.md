@@ -49,7 +49,7 @@ One can reconstruct the current state from the history, and this can also be use
 
 It's also possible to audit and verify the integrity of the git chain, to create a secure, finalized, state machine, with a definitive head, that is globally synced
 
-The system can be extended beyond reputation trees, to use any git based store, and anchor it to a secure, verifyable chain of blocks, to determine the definitve history
+The system can be extended beyond reputation trees, to use any git based store, and anchor it to a secure, verifiable chain of blocks, to determine the definitive history
 
 Many thanks go to Peter Todd for his work on [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) and Dr Maxim Orlovsky for his work on [RGB](https://rgb-org.github.io/)
 
@@ -57,13 +57,13 @@ _Gitmark is pre-alpha software, it should be considered experimental, and used a
 
 ## Prerequisites
 
-Because gitmark was designed to anchor reputation trees, the reputation of the underlying block chain must be unimpared.  Gitmark only supports block chains that are provably fair.  Bitcoin is regarded as the most secure and fairest of all block chains, and should be used for high value projects where cost is not an issue
+Because gitmark was designed to anchor reputation trees, the reputation of the underlying block chain must be unimpaired.  Gitmark only supports block chains that are provably fair.  Bitcoin is regarded as the most secure and fairest of all block chains, and should be used for high value projects where cost is not an issue
 
 Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus, such as proof of stake
 
 In solving the reputation use case, we aim to innovate in the space, contribute back code, and operate as a testing ground
 
-Bearing in mind that this is experimental software, the [bitmark](https://bitmark.rocks/) block chain, is the first chain on which gitmark is tested and implemented.  As it inexpensive, easily obitained, and was designed for the grounding of reputation trees (gitmark is a play on the word bitmark). This also provides a testing ground for developers to get started.  The Liquid network is also a possible target, and Litecoin appears to be another good possibility, as well as the various testnets
+Bearing in mind that this is experimental software, the [bitmark](https://bitmark.rocks/) block chain, is the first chain on which gitmark is tested and implemented.  As it inexpensive, easily obtained, and was designed for the grounding of reputation trees (gitmark is a play on the word bitmark). This also provides a testing ground for developers to get started.  The Liquid network is also a possible target, and Litecoin appears to be another good possibility, as well as the various testnets
 
 The first prerequisite is to obtain an unspent transaction on a supporting block chain. This can be in any coin, but to get started we suggest, getting hold of one Bitmark, which can be obtained inexpensively for example in the [chat room](https://projectbitmark.slack.com/) as it is designed to be spread between helpful actors, to foster innovation
 
@@ -148,9 +148,9 @@ The first use case for gitmark is marking of reputation trees, but it can be app
 
 - The project git tree can be backed up or archived using git clone in multiple locations. It is natural that popular projects are cloned often in any case
 
-- Seals can be opened and closed using a federation, in order to try out multiple consensus and vefification methods
+- Seals can be opened and closed using a federation, in order to try out multiple consensus and verification methods
 
-- More robust verification frameworks can be built using node testing frameworks, and continusous integration, tho currently the distribution contains a git-mark-verify script
+- More robust verification frameworks can be built using node testing frameworks, and continuous integration, tho currently the distribution contains a git-mark-verify script
 
 - Lightweight Autonomous Marking Agents (LAMAs) can be created that listen to communities for marks and just work, without needing a human operator. The service can be deployed on a server or container, and be designed to bring itself up if it goes down in any one location
 
