@@ -5,11 +5,11 @@ The gitmark schema is inspired but [RGB Schemas](https://www.rgbfaq.com/glossary
 ## OPS
 
 There are 5 [OPS](./OPS.md) in the schema
-- GENESIS(./GENESIS.md)
-- MARK(./MARK.md)
-- TOPUP(./TOPUP.md)
-- TRANSFER(./TRANSFER.md)
-- EXODUS(./EXODUS.md)
+- [GENESIS](./GENESIS.md)
+- [MARK](./MARK.md)
+- [TOPUP](./TOPUP.md)
+- [TRANSFER](./TRANSFER.md)
+- [EXODUS](./EXODUS.md)
 
 ## Crypto
 
