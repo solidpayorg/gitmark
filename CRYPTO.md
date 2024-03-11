@@ -1,12 +1,5 @@
-Gitmark transitions are on-chain committments that are recorded from one tranaction to another.
+Gitmark transitions represent a method of recording on-chain commitments, effectively capturing changes from one transaction to another within a blockchain. These transitions involve modifying a transaction's output (TXO) through a process known as a "tweaked spend to self." This method updates the transaction output in a way that encodes additional data without transferring assets away from the original owner.
 
-The transaction will go from a single transaction output (txo) to a tweaked transaction output, using a tweaked spend to self
+In this process, the original address (Address 1), denoted as 'A', is transformed into a new address (Address 2), labeled as 'A + T'. Here, 'T' represents the tweak applied to 'A', encoding specific information relevant to the transition. This tweak ('T') is carefully crafted to embody an on-chain commitment that directly references a specific Git commit.
 
-Address 1 : A
-Address 2 : A + T
-
-Where T is a tweak of a.
-
-The value of T becomes the on-chain commitmment which observes the git commit
-
-In essence, T = the latest git hash
+The essence of 'T' is that it equals the latest Git hash, creating a verifiable link between the blockchain transaction and a precise state of the Git repository. This linkage ensures that the blockchain not only serves as a ledger for financial transactions but also as a secure and immutable record of software development milestones as represented by Git commits. Through this innovative integration, Gitmark transitions facilitate a new level of transparency and auditability in software development, leveraging the inherent strengths of blockchain technology to foster trust and integrity in digital records.
