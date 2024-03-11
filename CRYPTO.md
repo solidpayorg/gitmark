@@ -1,5 +1,7 @@
 # Crypto
 
+![image](https://github.com/solidpayorg/gitmark/assets/65864/a06152fc-a7f5-4a99-a75f-4471e16ea173)
+
 # Gitmark Transitions: Bridging Blockchain and Git
 
 Gitmark transitions offer a novel approach to embedding on-chain commitments within the blockchain, enabling a seamless capture of changes from one transaction to another. This methodology leverages a unique process termed as a **"tweaked spend to self"** to modify a transaction's output (TXO), enriching it with additional data while ensuring the original asset holder retains ownership.
