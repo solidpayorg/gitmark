@@ -1,3 +1,9 @@
+## Introduction
+
+Mark is the main function of gitmark.  It has a prerequisite on [GENESIS](./GENESIS.md) and
+with these two oprations you are able to create robust git repos recorded in time, and 
+identifiable globally.
+
 ## Chain follows repo
 
 A mark is a marking of the underlying block chain with an on-chain committment
