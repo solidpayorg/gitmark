@@ -31,5 +31,6 @@ The balance is an amount in satoshis
 
 ## Conclusion
 
-In this way the chain follows the repo, and the repo follows the chain, leading to a
-robust, auditable, time stamping solution, using git and block chains, to prevent double spending
+In this way, the chain follows the repository, and the repository follows the chain, 
+leading to a robust, auditable, time-stamping solution using Git and blockchains. 
+This approach prevents double-spending by ensuring that the repository and the blockchain are in sync with each other.
