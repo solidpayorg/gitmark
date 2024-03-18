@@ -1,3 +1,5 @@
+![image](https://github.com/solidpayorg/gitmark/assets/65864/09e421be-a3ce-4e4d-b2c2-e5c1be4ebb87)
+
 ## Introduction
 
 Mark is the main function of gitmark.  It has a prerequisite on [GENESIS](./GENESIS.md) and
