@@ -105,6 +105,8 @@ Similarly the definitive git tree forms a chain of commits that go forward in ti
 
 The first use case for gitmark is marking of reputation trees, but it can be applied to any git system where the history is important
 
+For more technical information take a look at [SCHEMA.md](./SCHEMA.md)
+
 ## Recent git marks
 
 - [Github](https://github.com/search?o=desc&q=%22gitmark+%22&s=committer-date&type=Commits)
