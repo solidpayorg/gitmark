@@ -14,6 +14,8 @@ Gitmark transitions offer a novel approach to embedding on-chain commitments wit
 
 - **Initial State (Address 1)**: Identified as `A`, this represents the blockchain address prior to modification.
 - **Transformed State (Address 2)**: Denoted as `A + T`, this address emerges post-modification, with `T` symbolizing the tweak applied to `A`. This tweak is not arbitrary; it encapsulates specific, transition-relevant information.
+
+The new address has a vout of 0.  All other vouts are not used in gitmark, they may be used to send funds elsewhere.
   
 ### The Role of `T`
 
