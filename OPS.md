@@ -24,8 +24,8 @@ Transfers ownership of the contract to another party
 
 [Docs](./TRANSFER.md)
 
-### Exodus
+### Burn
 
 Marks a repo as inactive
 
-[Docs](./EXODUS.md)
+[Docs](./BURN.md)
