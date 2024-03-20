@@ -10,7 +10,7 @@ The Gitmark schema defines five core operations (OPS) for managing the state of 
 2. [MARK](./MARK.md): Records a specific state or event in the Git repository, such as a milestone or release.
 3. [TOPUP](./TOPUP.md): Adds new funds or resources to the Git repository, such as through a crowdfunding campaign or sponsorship.
 4. [TRANSFER](./TRANSFER.md): Moves funds or resources from one part of the Git repository to another, such as between different branches or accounts.
-5. [EXODUS](./EXODUS.md): Closes out a Git repository and transfers any remaining funds or resources to a designated recipient.
+5. [BURN](./BURN.md): Closes out a Git repository and transfers any remaining funds or resources to a designated recipient.
 
 ## Cryptographic Operations
 
