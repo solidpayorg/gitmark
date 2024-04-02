@@ -23,7 +23,7 @@ Mark your git commits, to create global consensus, and a definitive project hist
   
 ## Introduction
 
-Gitmark extends git to allow commits to be "marked" (using the command `git mark`) by a supporting block chain. This "reinforces" or "finalizes" a given commit, to determine global consensus and a definitive project history
+Gitmark enhances git functionality by introducing the ability to 'mark' commits using the `git mark` command, integrating supported time chains (aka block chains). This process 'reinforces' or 'finalizes' specific commits, facilitating the establishment of a global consensus and creating a definitive, auditable, and tamper-proof history for a project. Git mark additionslly solves the double spend problem for git repositories.  Technical details are presented in the git mark [SCHEMA](./SCHEMA.md).
 
 ## Installation
 
