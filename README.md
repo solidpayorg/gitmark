@@ -14,7 +14,6 @@ Mark your git commits, to create global consensus, and a definitive project hist
   
 ---
 
-
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/solidpayorg/git-mark/blob/gh-pages/LICENSE)
 ![npm](https://img.shields.io/npm/v/gitmark)
 [![npm](https://img.shields.io/npm/dw/gitmark.svg)](https://npmjs.com/package/gitmark)
@@ -40,7 +39,7 @@ git mark [--genesis txoutput] # used for the genesis commit
 
 ## Motivation
 
-Gitmark, was originally created to facilitate the [marking](https://github.com/project-bitmark/marking/wiki) use case, which aims to allow global, distributed, reputation trees, to be grounded in a block chain
+Gitmark was originally created to facilitate the [marking](https://github.com/project-bitmark/marking/wiki) use case, which aims to allow global, distributed reputation trees to be grounded in a blockchain.
 
 What is made possible, is a way to provide consensus on a definitive git branch/chain, in order to ensure that the history has not been tampered with
 
