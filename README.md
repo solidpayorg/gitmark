@@ -13,17 +13,16 @@ Mark your git commits, to create global consensus, and a definitive project hist
 </div>
   
 ---
-  
+
 
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/solidpayorg/git-mark/blob/gh-pages/LICENSE)
 ![npm](https://img.shields.io/npm/v/gitmark)
 [![npm](https://img.shields.io/npm/dw/gitmark.svg)](https://npmjs.com/package/gitmark)
 [![Github Stars](https://img.shields.io/github/stars/solidpayorg/gitmark.svg)](https://github.com/solidpayorg/gitmark/)
-  
-  
+
 ## Introduction
 
-Gitmark enhances git functionality by introducing the ability to 'mark' commits using the `git mark` command, integrating supported time chains (aka block chains). This process 'reinforces' or 'finalizes' specific commits, facilitating the establishment of a global consensus and creating a definitive, auditable, and tamper-proof history for a project. Git mark additionslly solves the double spend problem for git repositories.  Technical details are presented in the git mark [SCHEMA](./SCHEMA.md).
+Gitmark enhances git functionality by introducing the ability to 'mark' commits using the `git mark` command, integrating supported time chains (aka block chains). This process 'reinforces' or 'finalizes' specific commits, facilitating the establishment of a global consensus and creating a definitive, auditable, and tamper-proof history for a project. Git mark additionally solves the double spend problem for git repositories. Technical details are presented in the git mark [SCHEMA](./SCHEMA.md).
 
 ## Installation
 
@@ -57,13 +56,13 @@ _Gitmark is pre-alpha software, it should be considered experimental, and used a
 
 ## Prerequisites
 
-Because gitmark was designed to anchor reputation trees, the reputation of the underlying block chain must be unimpaired.  Gitmark only supports block chains that are provably fair.  Bitcoin is regarded as the most secure and fairest of all block chains, and should be used for high value projects where cost is not an issue
+Because gitmark was designed to anchor reputation trees, the reputation of the underlying block chain must be unimpaired. Gitmark only supports block chains that are provably fair. Bitcoin is regarded as the most secure and fairest of all block chains, and should be used for high value projects where cost is not an issue
 
 Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus, such as proof of stake
 
 In solving the reputation use case, we aim to innovate in the space, contribute back code, and operate as a testing ground
 
-Bearing in mind that this is experimental software, the [bitmark](https://bitmark.rocks/) block chain, is the first chain on which gitmark is tested and implemented.  As it inexpensive, easily obtained, and was designed for the grounding of reputation trees (gitmark is a play on the word bitmark). This also provides a testing ground for developers to get started.  The Liquid network is also a possible target, and Litecoin appears to be another good possibility, as well as the various testnets
+Bearing in mind that this is experimental software, the [bitmark](https://bitmark.rocks/) block chain, is the first chain on which gitmark is tested and implemented. As it inexpensive, easily obtained, and was designed for the grounding of reputation trees (gitmark is a play on the word bitmark). This also provides a testing ground for developers to get started. The Liquid network is also a possible target, and Litecoin appears to be another good possibility, as well as the various testnets
 
 The first prerequisite is to obtain an unspent transaction on a supporting block chain. This can be in any coin, but to get started we suggest, getting hold of one Bitmark, which can be obtained inexpensively for example in the [chat room](https://projectbitmark.slack.com/) as it is designed to be spread between helpful actors, to foster innovation
 
@@ -89,7 +88,7 @@ _Warning: do not use the default private key, that is set, in the script!_
 
 Git mark will generate a new address to send to, a fee, an amount, a spending private key and unspent tx data as inputs to an rpc or a simple script `tx.sh` that lives in the bin directory. Future versions will use a transaction builder to send to a network directly
 
-After running this script, an empty commit message is generated which you can check in, and points to the latest new unspent transaction, creating a two way link.  The commit message is a gitmark [URI](./URI.md)
+After running this script, an empty commit message is generated which you can check in, and points to the latest new unspent transaction, creating a two way link. The commit message is a gitmark [URI](./URI.md)
 
 Congratulations! You have now marked your first git repo!
 
