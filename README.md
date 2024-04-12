@@ -55,15 +55,13 @@ _Gitmark is pre-alpha software, it should be considered experimental, and used a
 
 ## Prerequisites
 
-Because gitmark was designed to anchor reputation trees, the reputation of the underlying block chain must be unimpaired. Gitmark only supports block chains that are provably fair. Bitcoin is regarded as the most secure and fairest of all block chains, and should be used for high value projects where cost is not an issue
+Because Gitmark was designed to anchor reputation trees, the reputation of the underlying blockchain must be unimpaired. Gitmark only supports blockchains that are provably fair. Bitcoin is regarded as the most secure and fairest of all blockchains, and should be used for high value projects where cost is not an issue.
 
-Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus, such as proof of stake
+Gitmark does not support projects that are premines, instamines, ICOs, have developer taxes or provably unfair consensus, such as proof of stake.
 
-In solving the reputation use case, we aim to innovate in the space, contribute back code, and operate as a testing ground
+In solving the reputation use case, we aim to innovate in the space, contribute back code, and operate as a testing ground.
 
-Bearing in mind that this is experimental software, the [bitmark](https://bitmark.rocks/) block chain, is the first chain on which gitmark is tested and implemented. As it inexpensive, easily obtained, and was designed for the grounding of reputation trees (gitmark is a play on the word bitmark). This also provides a testing ground for developers to get started. The Liquid network is also a possible target, and Litecoin appears to be another good possibility, as well as the various testnets
-
-The first prerequisite is to obtain an unspent transaction on a supporting block chain. This can be in any coin, but to get started we suggest, getting hold of one Bitmark, which can be obtained inexpensively for example in the [chat room](https://projectbitmark.slack.com/) as it is designed to be spread between helpful actors, to foster innovation
+The first prerequisite is to obtain an unspent transaction on a supporting block chain. 
 
 ## Getting started
 
