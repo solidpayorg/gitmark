@@ -61,11 +61,11 @@ Gitmark does not support projects that are premines, instamines, ICOs, have deve
 
 In solving the reputation use case, we aim to innovate in the space, contribute back code, and operate as a testing ground.
 
-The first prerequisite is to obtain an unspent transaction on a supporting block chain. 
+The first prerequisite is to obtain an unspent transaction on a supporting blockchain. 
 
 ## Getting started
 
-After you have obtained some block chain currency, send those coins to an address for which you have the keypair. That becomes the genesis unspent transaction
+After you have obtained some blockchain currency, send those coins to an address for which you have the key pair. That becomes the genesis unspent transaction
 
 Having created a genesis transaction, and recording the key pair safely, you are ready to start marking!
 
