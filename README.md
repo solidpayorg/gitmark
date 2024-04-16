@@ -93,15 +93,15 @@ See also: [Example Workflow](./WORKFLOW.md)
 
 ## How it works
 
-Gitmark simply uses [single use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. The current git hash is added to the original, genesis, public key in the output transaction, creating a chain of commits in the block chain
+Gitmark simply uses [single-use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) to tweak the initial public key address of the genesis transaction by the commit hash of the git tree. The current git hash is added to the original, genesis public key in the output transaction, creating a chain of commits in the blockchain.
 
-In this way the block chain points to git. It then points the next commit back to the block chain tx, creating two way link, and therefore, strong binding, at one particular point in time
+In this way, the blockchain points to git. It then points the next commit back to the blockchain tx, creating a two-way link, and therefore, a strong binding at one particular point in time.
 
-Similarly the definitive git tree forms a chain of commits that go forward in time, and so do the new transaction on the block chain. Further commits are periodically marked in time proving an auditable trail in both time on-chain of the evolution of the git tree. It also shows the latest confirmed state of a git tree that can be used for trading or in safe or smart contracts
+Similarly, the definitive git tree forms a chain of commits that go forward in time, and so do the new transactions on the blockchain. Further commits are periodically marked in time, proving an auditable trail on-chain of the evolution of the git tree. It also shows the latest confirmed state of a git tree that can be used for trading or in safe or smart contracts.
 
-The first use case for gitmark is marking of reputation trees, but it can be applied to any git system where the history is important
+The first use case for gitmark is marking reputation trees, but it can be applied to any git system where the history is important.
 
-For more technical information take a look at [SCHEMA.md](./SCHEMA.md)
+For more technical information take a look at [SCHEMA.md](./SCHEMA.md).
 
 ## Recent git marks
 
