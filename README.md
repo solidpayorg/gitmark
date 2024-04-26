@@ -61,7 +61,7 @@ Gitmark does not support projects that are premines, instamines, ICOs, have deve
 
 In solving the reputation use case, we aim to innovate in the space, contribute back code, and operate as a testing ground.
 
-The first prerequisite is to obtain an unspent transaction on a supporting blockchain. 
+The first prerequisite is to obtain an unspent transaction on a supporting blockchain.
 
 ## Getting started
 
@@ -131,6 +131,7 @@ For more technical information take a look at [SCHEMA.md](./SCHEMA.md).
 - [RGB](https://rgb-org.github.io/)
 - [Commerce Block Mainstay](https://www.commerceblock.com/mainstay/) [[White Paper](https://cloudflare-ipfs.com/ipns/ipfs.commerceblock.com/commerceblock-whitepaper-mainstay.pdf)]
 - [BIP 175 - Pay to Contract Protocol](https://github.com/bitcoin/bips/blob/master/bip-0175.mediawiki)
+- [LRC-20](https://github.com/akitamiabtc/LRC-20/blob/main/LRC_20_V0.1.pdf)
 
 ## Source code
 
