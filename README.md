@@ -132,6 +132,7 @@ For more technical information take a look at [SCHEMA.md](./SCHEMA.md).
 - [Commerce Block Mainstay](https://www.commerceblock.com/mainstay/) [[White Paper](https://cloudflare-ipfs.com/ipns/ipfs.commerceblock.com/commerceblock-whitepaper-mainstay.pdf)]
 - [BIP 175 - Pay to Contract Protocol](https://github.com/bitcoin/bips/blob/master/bip-0175.mediawiki)
 - [LRC-20](https://github.com/akitamiabtc/LRC-20/blob/main/LRC_20_V0.1.pdf)
+- [DID-BTC](https://microstrategy.github.io/did-btc-spec/)
 
 ## Source code
 
