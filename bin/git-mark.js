@@ -336,8 +336,8 @@ async function cmdInit(args) {
 
     savePrivateState({ txid: newTxid, vout: 0, amount: outputAmount }, chain);
     const xonly = pubkey.slice(2); // 64-char x-only Nostr pubkey
-    // Insert @id after @type to keep it at the top
-    const reordered = { '@type': trail['@type'], '@id': `txo:${chain}:${newTxid}:0?amount=${outputAmount}&pubkey=${xonly}` };
+    // Insert @id first
+    const reordered = { '@id': `txo:${chain}:${newTxid}:0?amount=${outputAmount}&pubkey=${xonly}`, '@type': trail['@type'] };
     for (const [k, v] of Object.entries(trail)) { if (k !== '@type') reordered[k] = v; }
     Object.keys(trail).forEach(k => delete trail[k]);
     Object.assign(trail, reordered);
