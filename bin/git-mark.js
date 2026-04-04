@@ -185,7 +185,7 @@ async function broadcastTx(rawHex, explorer) {
 function gitExec(cmd) { return execSync(cmd, { encoding: 'utf8' }).trim(); }
 function getHead() { return gitExec('git rev-parse HEAD'); }
 function getPrivkey() {
-  try { return gitExec('git config nostr.privkey'); } catch { return null; }
+  try { return gitExec('git config --local nostr.privkey'); } catch { return null; }
 }
 function setPrivkey(key) { gitExec(`git config --local nostr.privkey ${key}`); }
 function isGitRoot() { return existsSync('.git'); }
