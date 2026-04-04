@@ -3,7 +3,7 @@
 Anchor git commits to Bitcoin via [blocktrails](https://blocktrails.org) key chaining.
 
 [![npm](https://img.shields.io/npm/v/gitmark)](https://npmjs.com/package/gitmark)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![license](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](./LICENSE)
 
 ## Install
 
@@ -96,4 +96,4 @@ Two: `@noble/curves` and `@noble/hashes`. No bitcoinjs-lib, no external transact
 
 ## License
 
-MIT
+AGPL-3.0 &copy; Melvin Carvalho
