@@ -249,6 +249,7 @@ async function cmdInit(args) {
 
   // Create trail
   const trail = {
+    '@type': 'Blocktrail',
     version: '0.0.3',
     profile: 'gitmark',
     publicKeyBase: pubkey,
