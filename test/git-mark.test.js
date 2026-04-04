@@ -189,6 +189,19 @@ describe('Trail format', () => {
     assert.strictEqual(trail.states.length, trail.txo.length);
   });
 
+  it('@id is valid txo URI with amount and 64-char x-only pubkey', () => {
+    const privkey = secp256k1.utils.randomPrivateKey();
+    const pubkey = bytesToHex(secp256k1.getPublicKey(privkey, true));
+    const xonly = pubkey.slice(2);
+    const txid = 'a'.repeat(64);
+    const id = `txo:tbtc4:${txid}:0?amount=14968&pubkey=${xonly}`;
+    const parsed = parseTxoUri(id);
+    assert.strictEqual(parsed.chain, 'tbtc4');
+    assert.strictEqual(parsed.txid, txid);
+    assert.strictEqual(parsed.amount, 14968);
+    assert.strictEqual(xonly.length, 64);
+  });
+
   it('txo URIs include amount and commit params', () => {
     const txoUri = 'txo:tbtc4:abc123:0?amount=9700&commit=deadbeef';
     const parsed = parseTxoUri(txoUri);
