@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <rect width="1200" height="630" fill="#1a1a2e"/>
+  <rect x="0" y="0" width="1200" height="4" fill="#f7931a"/>
+  <text x="600" y="240" text-anchor="middle" font-family="Georgia, serif" font-size="96" font-weight="bold" fill="#f7931a">git mark</text>
+  <text x="600" y="320" text-anchor="middle" font-family="Georgia, serif" font-size="36" fill="#cccccc">Anchor Git Commits to Bitcoin</text>
+  <text x="600" y="400" text-anchor="middle" font-family="'SFMono-Regular', Consolas, monospace" font-size="22" fill="#888888">Tamper-proof history via BIP-341 key chaining</text>
+  <text x="600" y="540" text-anchor="middle" font-family="Georgia, serif" font-size="24" fill="#666666">git-mark.com</text>
+</svg>
