@@ -8,6 +8,7 @@
  *   git mark [--chain tbtc4]
  *   git mark info
  *   git mark verify
+ *   git mark update
  */
 
 import { secp256k1, schnorr } from '@noble/curves/secp256k1';
@@ -482,6 +483,13 @@ async function cmdVerify() {
   process.exit(ok ? 0 : 1);
 }
 
+function cmdUpdate() {
+  const trail = loadTrailFromNotes();
+  if (!trail) { console.error(`No ${TRAIL_FILE} found. Run: git mark init`); process.exit(1); }
+  saveTrail(trail);
+  console.log(`Updated ${TRAIL_FILE} from git notes (${trail.states.length} marks)`);
+}
+
 // --- Exports for testing ---
 export {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
@@ -503,6 +511,8 @@ if (isMain) {
     cmdInfo();
   } else if (cmd === 'verify') {
     cmdVerify();
+  } else if (cmd === 'update') {
+    cmdUpdate();
   } else if (cmd === 'mark' || !cmd || (cmd && !cmd.startsWith('-'))) {
     if (!existsSync(TRAIL_FILE) && cmd !== 'mark') {
       console.log('Usage:');
@@ -510,6 +520,7 @@ if (isMain) {
       console.log('  git mark                  # anchor HEAD to Bitcoin');
       console.log('  git mark info             # show trail state');
       console.log('  git mark verify           # verify trail against Bitcoin');
+      console.log('  git mark update           # update blocktrails.json from git notes');
     } else {
       cmdMark(args.slice(cmd === 'mark' ? 1 : 0));
     }

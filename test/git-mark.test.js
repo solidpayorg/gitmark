@@ -5,7 +5,7 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
 import {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
-  pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail
+  pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes
 } from '../bin/git-mark.js';
 
 describe('Key chaining', () => {
@@ -204,8 +204,40 @@ describe('Dirty flag', () => {
   });
 
   it('loadFullTrail returns null when no trail file exists', () => {
-    // In test context there's no blocktrails.json, so should return null
     const trail = loadFullTrail();
     assert.strictEqual(trail, null);
+  });
+
+  it('loadTrailFromNotes returns null when no trail file exists', () => {
+    const trail = loadTrailFromNotes();
+    assert.strictEqual(trail, null);
+  });
+
+  it('loadFullTrail uses loadTrail when dirty is true', () => {
+    // Default is dirty=true, so loadFullTrail should behave like loadTrail
+    const full = loadFullTrail();
+    assert.strictEqual(full, null); // no blocktrails.json in test dir
+  });
+});
+
+describe('TXO URI in git config format', () => {
+  it('txo URI with amount and commit is parseable', () => {
+    const uri = 'txo:tbtc4:abc123:0?amount=9700&commit=deadbeef';
+    const parsed = parseTxoUri(uri);
+    assert.strictEqual(parsed.txid, 'abc123');
+    assert.strictEqual(parsed.vout, 0);
+    assert.strictEqual(parsed.amount, 9700);
+    assert.strictEqual(parsed.chain, 'tbtc4');
+  });
+
+  it('txo URI roundtrips through format used by savePrivateState', () => {
+    const state = { txid: 'abcdef1234', vout: 0, amount: 14668 };
+    const chain = 'tbtc4';
+    const head = 'deadbeef';
+    const uri = `txo:${chain}:${state.txid}:${state.vout}?amount=${state.amount}&commit=${head}`;
+    const parsed = parseTxoUri(uri);
+    assert.strictEqual(parsed.txid, state.txid);
+    assert.strictEqual(parsed.vout, state.vout);
+    assert.strictEqual(parsed.amount, state.amount);
   });
 });
