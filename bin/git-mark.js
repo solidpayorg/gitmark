@@ -187,7 +187,9 @@ async function broadcastTx(rawHex, explorer) {
 
 // --- Git helpers ---
 function gitExec(cmd) { return execSync(cmd, { encoding: 'utf8' }).trim(); }
-function getHead() { return gitExec('git rev-parse HEAD'); }
+function getHead() {
+  try { return gitExec('git rev-parse HEAD'); } catch { return null; }
+}
 function getPrivkey() {
   try { return gitExec('git config --local nostr.privkey'); } catch { return null; }
 }
@@ -313,6 +315,7 @@ async function cmdMark(args) {
   if (!privkey) { console.error('No private key. Set: git config nostr.privkey <hex>'); process.exit(1); }
 
   const head = getHead();
+  if (!head) { console.error('No commits yet. Make a commit first.'); process.exit(1); }
   const chain = trail.chain;
   const explorer = CHAINS[chain]?.explorer;
   if (!explorer) { console.error(`Unknown chain: ${chain}`); process.exit(1); }
