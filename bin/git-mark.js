@@ -415,7 +415,7 @@ async function cmdVerify() {
       const out = txData.vout?.[parsed.vout];
       if (!out) { console.log(`  [${i}] FAIL — output ${parsed.vout} not found`); ok = false; continue; }
       if (out.scriptpubkey_address === expectedAddr) {
-        console.log(`  [${i}] OK — ${trail.states[i].slice(0, 8)} → ${expectedAddr.slice(0, 20)}...`);
+        console.log(`  [${i}] OK — ${trail.states[i].slice(0, 8)} → ${expectedAddr}`);
       } else {
         console.log(`  [${i}] FAIL — address mismatch`);
         console.log(`    expected: ${expectedAddr}`);
