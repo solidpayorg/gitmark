@@ -15,7 +15,11 @@ import { sha256 } from '@noble/hashes/sha256';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PKG = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
 
 // --- Constants ---
 const SECP_N = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141n;
@@ -438,7 +442,9 @@ if (isMain) {
   const args = process.argv.slice(2);
   const cmd = args[0];
 
-  if (cmd === 'init') {
+  if (cmd === '--version' || cmd === '-v') {
+    console.log(PKG.version);
+  } else if (cmd === 'init') {
     cmdInit(args.slice(1));
   } else if (cmd === 'info') {
     cmdInfo();
