@@ -335,6 +335,8 @@ async function cmdInit(args) {
     const newTxid = await broadcastTx(rawTx, explorer);
 
     savePrivateState({ txid: newTxid, vout: 0, amount: outputAmount }, chain);
+    const xonly = pubkey.slice(2); // 64-char x-only Nostr pubkey
+    trail['@id'] = `txo:${chain}:${newTxid}:0?amount=${outputAmount}&pubkey=${xonly}`;
     console.log(`Funded: ${outputAmount} sats (txid: ${newTxid})`);
   }
 
