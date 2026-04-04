@@ -425,32 +425,40 @@ async function cmdVerify() {
   process.exit(ok ? 0 : 1);
 }
 
-// --- CLI ---
-const args = process.argv.slice(2);
-const cmd = args[0];
+// --- Exports for testing ---
+export {
+  taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
+  pubkeyToAddress, parseTxoUri, p2trScript, buildTransaction,
+  TRAIL_FILE, PRIVATE_FILE, CHAINS
+};
 
-if (cmd === 'init') {
-  cmdInit(args.slice(1));
-} else if (cmd === 'info') {
-  cmdInfo();
-} else if (cmd === 'verify') {
-  cmdVerify();
-} else if (cmd === 'mark' || !cmd || (cmd && !cmd.startsWith('-'))) {
-  // Default action is mark (git mark = git mark mark)
-  // But if no trail exists, suggest init
-  if (!existsSync(TRAIL_FILE) && cmd !== 'mark') {
+// --- CLI ---
+const isMain = process.argv[1]?.endsWith('git-mark.js') || process.argv[1]?.endsWith('git-mark');
+if (isMain) {
+  const args = process.argv.slice(2);
+  const cmd = args[0];
+
+  if (cmd === 'init') {
+    cmdInit(args.slice(1));
+  } else if (cmd === 'info') {
+    cmdInfo();
+  } else if (cmd === 'verify') {
+    cmdVerify();
+  } else if (cmd === 'mark' || !cmd || (cmd && !cmd.startsWith('-'))) {
+    if (!existsSync(TRAIL_FILE) && cmd !== 'mark') {
+      console.log('Usage:');
+      console.log('  git mark init [--chain tbtc4] [--voucher txo:...]');
+      console.log('  git mark                  # anchor HEAD to Bitcoin');
+      console.log('  git mark info             # show trail state');
+      console.log('  git mark verify           # verify trail against Bitcoin');
+    } else {
+      cmdMark(args.slice(cmd === 'mark' ? 1 : 0));
+    }
+  } else {
     console.log('Usage:');
     console.log('  git mark init [--chain tbtc4] [--voucher txo:...]');
     console.log('  git mark                  # anchor HEAD to Bitcoin');
     console.log('  git mark info             # show trail state');
     console.log('  git mark verify           # verify trail against Bitcoin');
-  } else {
-    cmdMark(args.slice(cmd === 'mark' ? 1 : 0));
   }
-} else {
-  console.log('Usage:');
-  console.log('  git mark init [--chain tbtc4] [--voucher txo:...]');
-  console.log('  git mark                  # anchor HEAD to Bitcoin');
-  console.log('  git mark info             # show trail state');
-  console.log('  git mark verify           # verify trail against Bitcoin');
 }

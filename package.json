@@ -8,7 +8,7 @@
     "git-mark": "bin/git-mark.js"
   },
   "scripts": {
-    "test": "node bin/git-mark.js --help"
+    "test": "node --test test/git-mark.test.js"
   },
   "repository": {
     "type": "git",
