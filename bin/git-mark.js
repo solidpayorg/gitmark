@@ -205,11 +205,55 @@ function saveTrail(trail) {
   writeFileSync(TRAIL_FILE, JSON.stringify(trail, null, 2) + '\n');
 }
 function loadPrivateState() {
-  if (!existsSync(PRIVATE_FILE)) return null;
-  return JSON.parse(readFileSync(PRIVATE_FILE, 'utf8'));
+  // Try git config first, fall back to legacy file
+  try {
+    const txoUri = gitExec('git config --local gitmark.txo');
+    const parsed = parseTxoUri(txoUri);
+    return { txid: parsed.txid, vout: parsed.vout, amount: parsed.amount };
+  } catch {
+    if (!existsSync(PRIVATE_FILE)) return null;
+    return JSON.parse(readFileSync(PRIVATE_FILE, 'utf8'));
+  }
 }
-function savePrivateState(state) {
-  writeFileSync(PRIVATE_FILE, JSON.stringify(state, null, 2) + '\n');
+function savePrivateState(state, chain, head) {
+  const txoUri = `txo:${chain}:${state.txid}:${state.vout}?amount=${state.amount}${head ? '&commit=' + head : ''}`;
+  gitExec(`git config --local gitmark.txo ${txoUri}`);
+}
+function isDirty() {
+  try { return gitExec('git config --local gitmark.dirty') !== 'false'; } catch { return true; }
+}
+function addGitNote(commitHash, note) {
+  try { gitExec(`git notes add -f -m ${note} ${commitHash}`); } catch { /* ignore if no commits */ }
+}
+function loadTrailFromNotes() {
+  const trail = loadTrail();
+  if (!trail) return null;
+  try {
+    const notesList = gitExec('git notes list');
+    if (!notesList) return trail;
+    const notedCommits = new Set(notesList.split('\n').filter(Boolean).map(l => l.split(' ')[1]));
+    const allCommits = gitExec('git log --reverse --format=%H').split('\n').filter(Boolean);
+    const states = [];
+    const txos = [];
+    for (const commit of allCommits) {
+      if (!notedCommits.has(commit)) continue;
+      try {
+        const note = gitExec(`git notes show ${commit}`);
+        if (note.startsWith('txo:')) {
+          states.push(commit);
+          txos.push(note);
+        }
+      } catch { continue; }
+    }
+    trail.states = states;
+    trail.txo = txos;
+    return trail;
+  } catch {
+    return trail;
+  }
+}
+function loadFullTrail() {
+  return isDirty() ? loadTrail() : loadTrailFromNotes();
 }
 
 // --- Parse TXO URI ---
@@ -289,7 +333,7 @@ async function cmdInit(args) {
     );
     const newTxid = await broadcastTx(rawTx, explorer);
 
-    savePrivateState({ txid: newTxid, vout: 0, amount: outputAmount });
+    savePrivateState({ txid: newTxid, vout: 0, amount: outputAmount }, chain);
     console.log(`Funded: ${outputAmount} sats (txid: ${newTxid})`);
   }
 
@@ -300,14 +344,14 @@ async function cmdInit(args) {
   console.log(`Base public key: ${pubkey}`);
   console.log(`Chain: ${chain}`);
   console.log(`Address: ${pubkeyToAddress(pubkey, [], chain)}`);
-  if (!existsSync(PRIVATE_FILE) && voucherIdx === -1) {
+  if (!loadPrivateState() && voucherIdx === -1) {
     console.log(`\nUnfunded. Use: git mark init --voucher txo:${chain}:txid:vout?amount=X&key=Y`);
     console.log(`Or send sats to: ${pubkeyToAddress(pubkey, [], chain)}`);
   }
 }
 
 async function cmdMark(args) {
-  const trail = loadTrail();
+  const trail = loadFullTrail();
   if (!trail) { console.error(`No ${TRAIL_FILE} found. Run: git mark init`); process.exit(1); }
   const priv = loadPrivateState();
   if (!priv) { console.error('No funding. Run: git mark init --voucher txo:...'); process.exit(1); }
@@ -353,13 +397,18 @@ async function cmdMark(args) {
   );
   const newTxid = await broadcastTx(rawTx, explorer);
 
-  // Update trail
-  trail.states.push(head);
-  trail.txo.push(`txo:${chain}:${newTxid}:0?commit=${head}`);
-  saveTrail(trail);
+  const txoUri = `txo:${chain}:${newTxid}:0?amount=${outputAmount}&commit=${head}`;
 
-  // Update private state
-  savePrivateState({ txid: newTxid, vout: 0, amount: outputAmount });
+  // Always: git notes + git config
+  addGitNote(head, txoUri);
+  savePrivateState({ txid: newTxid, vout: 0, amount: outputAmount }, chain, head);
+
+  // Update trail file if dirty mode
+  trail.states.push(head);
+  trail.txo.push(txoUri);
+  if (isDirty()) {
+    saveTrail(trail);
+  }
 
   const address = pubkeyToAddress(trail.publicKeyBase, allStates, chain);
   console.log(`Marked: ${head.slice(0, 8)} → ${newTxid.slice(0, 16)}...`);
@@ -369,7 +418,7 @@ async function cmdMark(args) {
 }
 
 async function cmdInfo() {
-  const trail = loadTrail();
+  const trail = loadFullTrail();
   if (!trail) { console.error(`No ${TRAIL_FILE} found.`); process.exit(1); }
   const priv = loadPrivateState();
 
@@ -393,7 +442,7 @@ async function cmdInfo() {
 }
 
 async function cmdVerify() {
-  const trail = loadTrail();
+  const trail = loadFullTrail();
   if (!trail) { console.error(`No ${TRAIL_FILE} found.`); process.exit(1); }
   if (trail.states.length === 0) { console.log('No marks to verify.'); return; }
 
@@ -437,7 +486,7 @@ async function cmdVerify() {
 export {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, buildTransaction,
-  TRAIL_FILE, PRIVATE_FILE, CHAINS
+  TRAIL_FILE, PRIVATE_FILE, CHAINS, isDirty, loadTrailFromNotes, loadFullTrail
 };
 
 // --- CLI ---
