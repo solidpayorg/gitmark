@@ -1,40 +1,34 @@
 {
   "name": "gitmark",
-  "version": "0.0.68",
-  "description": "gitmark",
-  "main": "index.js",
+  "version": "0.0.69",
+  "type": "module",
+  "description": "Anchor git commits to Bitcoin via blocktrails",
+  "main": "bin/git-mark.js",
+  "bin": {
+    "git-mark": "bin/git-mark.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node bin/git-mark.js --help"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/solidpayorg/gitmark.git"
   },
   "keywords": [
-    "gitmark"
+    "gitmark",
+    "blocktrails",
+    "bitcoin",
+    "git",
+    "nostr"
   ],
-  "bin": {
-    "git-mark": "bin/git-mark",
-    "git-mark-init": "bin/git-mark-init",
-    "git-mark-list": "bin/git-mark-list",
-    "git-mark-verify": "bin/git-mark-verify"
-  },
   "author": "Melvin Carvalho",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/solidpayorg/gitmark/issues"
   },
-  "homepage": "https://github.com/solidpayorg/gitmark#readme",
+  "homepage": "https://git-mark.com",
   "dependencies": {
-    "bip-schnorr": "^0.6.4",
-    "bitcoinjs-lib": "^5.2.0",
-    "child_process": "^1.0.2",
-    "fs": "^0.0.1-security",
-    "gitlog": "^4.0.4",
-    "gitmark": "^0.0.56",
-    "minimist": "^1.2.5",
-    "sha256": "^0.2.0",
-    "tiny-secp256k1": "^1.1.6",
-    "ws": "^8.2.3"
+    "@noble/curves": "^1.2.0",
+    "@noble/hashes": "^1.3.0"
   }
 }
