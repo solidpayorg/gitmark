@@ -194,7 +194,7 @@ function getHead() {
 function getPrivkey() {
   try { return gitExec('git config --local nostr.privkey'); } catch { return null; }
 }
-function setPrivkey(key) { gitExec(`git config --local nostr.privkey ${key}`); }
+function setPrivkey(key) { gitExec(`git config --local nostr.privkey '${key}'`); }
 function isGitRoot() { return existsSync('.git'); }
 
 // --- Trail file helpers ---
@@ -218,13 +218,13 @@ function loadPrivateState() {
 }
 function savePrivateState(state, chain, head) {
   const txoUri = `txo:${chain}:${state.txid}:${state.vout}?amount=${state.amount}${head ? '&commit=' + head : ''}`;
-  gitExec(`git config --local gitmark.txo ${txoUri}`);
+  gitExec(`git config --local gitmark.txo '${txoUri}'`);
 }
 function isDirty() {
   try { return gitExec('git config --local gitmark.dirty') !== 'false'; } catch { return true; }
 }
 function addGitNote(commitHash, note) {
-  try { gitExec(`git notes add -f -m ${note} ${commitHash}`); } catch { /* ignore if no commits */ }
+  try { gitExec(`git notes add -f -m '${note}' '${commitHash}'`); } catch { /* ignore if no commits */ }
 }
 function loadTrailFromNotes() {
   const trail = loadTrail();
