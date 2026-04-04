@@ -93,7 +93,6 @@ Two: `@noble/curves` and `@noble/hashes`. No bitcoinjs-lib, no external transact
 - [blocktrails.org](https://blocktrails.org) — state anchoring on Bitcoin
 - [git-mark.com](https://git-mark.com) — project homepage
 - [BIP-341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki) — Taproot key tweaking
-- [Single-use seals](https://petertodd.org/2017/scalable-single-use-seal-asset-transfer) — Peter Todd
 
 ## License
 
