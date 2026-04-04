@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>git mark — Anchor Git Commits to Bitcoin</title>
+  <meta name="description" content="Mark your git commits on Bitcoin using blocktrails key chaining. Tamper-proof history, globally verifiable, two dependencies.">
+  <meta property="og:title" content="git mark — Anchor Git Commits to Bitcoin">
+  <meta property="og:description" content="Mark your git commits on Bitcoin using blocktrails key chaining. Tamper-proof history, globally verifiable.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://git-mark.com">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; background: #fafaf8; color: #2c2c2c; line-height: 1.7; padding: 2rem; }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 2.2rem; font-weight: 400; margin-bottom: 0.25rem; }
+    .subtitle { color: #666; font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .meta { color: #999; font-size: 0.85rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #ddd; }
+    .meta a { color: #999; }
+    h2 { font-size: 1.3rem; color: #f7931a; margin: 2.5rem 0 1rem; font-weight: 600; }
+    p { margin-bottom: 1.25rem; }
+    code { background: #f0efeb; padding: 0.15rem 0.4rem; border-radius: 3px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.85em; color: #555; }
+    pre { background: #f0efeb; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.85rem; margin: 1.25rem 0; line-height: 1.5; }
+    a { color: #1a5276; }
+    strong { font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid #ddd; color: #888; font-weight: 500; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #eee; }
+    .highlight { color: #f7931a; font-weight: 600; }
+    .callout { background: #fff8f0; border: 1px solid #f7931a33; border-radius: 4px; padding: 1.25rem; margin: 1.5rem 0; }
+    .callout .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #f7931a; margin-bottom: 0.5rem; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #ddd; color: #999; font-size: 0.85rem; }
+    footer a { color: #888; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>git mark</h1>
+    <div class="subtitle">Anchor git commits to Bitcoin via blocktrails</div>
+    <div class="meta">
+      <a href="https://github.com/solidpayorg/gitmark">GitHub</a> &middot;
+      <a href="https://www.npmjs.com/package/gitmark">npm</a> &middot;
+      <a href="https://blocktrails.org">blocktrails.org</a>
+    </div>
+
+    <h2>What It Does</h2>
+
+    <p><span class="highlight">Every <code>git mark</code> creates a Bitcoin transaction</span> that anchors your current commit to the blockchain. The transaction address is derived from your key + the commit hash using BIP-341 key chaining. Anyone can verify the anchor. Nobody can tamper with it.</p>
+
+    <p>The result is a two-way link: the blockchain follows your repo (via tweaked addresses), and your repo follows the blockchain (via <code>blocktrails.json</code>).</p>
+
+    <h2>Install</h2>
+
+<pre>npm install -g gitmark</pre>
+
+    <p>This gives you <code>git mark</code> as a native git subcommand.</p>
+
+    <h2>Quick Start</h2>
+
+<pre># Initialize in a git repo
+git mark init --chain tbtc4 --voucher txo:tbtc4:txid:vout?amount=X&amp;key=Y
+
+# Make commits, then mark them
+git commit -m "my change"
+git mark
+
+# Verify the trail
+git mark verify
+
+# Show trail state
+git mark info</pre>
+
+    <h2>How It Works</h2>
+
+    <table>
+      <tr><th>Step</th><th>What Happens</th></tr>
+      <tr><td>Init</td><td>Generates or reads your Nostr key, creates <code>blocktrails.json</code>, optionally funds the trail</td></tr>
+      <tr><td>Mark</td><td>Takes HEAD commit hash, derives a tweaked taproot address via BIP-341, builds and broadcasts a Bitcoin transaction</td></tr>
+      <tr><td>Verify</td><td>Walks the trail, re-derives each address from the public key + commit hashes, checks each transaction on Bitcoin</td></tr>
+    </table>
+
+    <p>Each mark advances the key chain: <code>newKey = baseKey + tweak(commit_hash)</code>. The chain of derived addresses on Bitcoin mirrors the chain of commits in git.</p>
+
+    <h2>The Trail File</h2>
+
+    <p><code>blocktrails.json</code> lives in your repo root, committed and visible:</p>
+
+<pre>{
+  "version": "0.0.3",
+  "profile": "gitmark",
+  "publicKeyBase": "02abc...",
+  "chain": "tbtc4",
+  "states": ["a1b2c3...", "e5f6a7..."],
+  "txo": [
+    "txo:tbtc4:abc:0?commit=a1b2c3...",
+    "txo:tbtc4:def:0?commit=e5f6a7..."
+  ]
+}</pre>
+
+    <p><strong>states</strong> — the commit hashes (input to key chaining math). <strong>txo</strong> — the Bitcoin anchors (TXO URIs, self-contained and verifiable). Anyone who clones your repo can verify the trail independently.</p>
+
+    <h2>Key Storage</h2>
+
+    <p>Your private key is stored in git config:</p>
+
+<pre>git config nostr.privkey &lt;64-char-hex&gt;</pre>
+
+    <p>The same secp256k1 key you use for Nostr, Bitcoin, and Solid pod authentication. One key for everything.</p>
+
+    <div class="callout">
+      <div class="label">Blocktrails</div>
+      <p style="margin-bottom: 0.75rem">Git-mark is a <a href="https://blocktrails.org">blocktrails</a> application profile. The key chaining math is identical to <a href="https://blocktrails.org">MRC20 tokens</a> — just with commit hashes as state instead of token ledgers. A generic blocktrails verifier handles both.</p>
+      <p style="margin-bottom: 0">Two dependencies: <code>@noble/curves</code> and <code>@noble/hashes</code>. No bitcoinjs-lib. No external transaction builders. Pure secp256k1 math.</p>
+    </div>
+
+    <h2>Commands</h2>
+
+    <table>
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td><code>git mark init</code></td><td>Initialize trail. Options: <code>--chain</code>, <code>--voucher</code>, <code>--force</code></td></tr>
+      <tr><td><code>git mark</code></td><td>Anchor HEAD commit to Bitcoin</td></tr>
+      <tr><td><code>git mark info</code></td><td>Show trail state, balance, addresses</td></tr>
+      <tr><td><code>git mark verify</code></td><td>Verify all marks against Bitcoin</td></tr>
+    </table>
+
+    <h2>Related</h2>
+
+    <p>
+      <a href="https://blocktrails.org">Blocktrails</a> &mdash; state anchoring on Bitcoin<br>
+      <a href="https://github.com/nicepkg/gitmark-test">gitmark-test</a> &mdash; interim implementation<br>
+      <a href="https://petertodd.org/2017/scalable-single-use-seal-asset-transfer">Single-use seals</a> &mdash; Peter Todd<br>
+      <a href="https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki">BIP-341</a> &mdash; Taproot key tweaking
+    </p>
+
+    <footer>
+      <p>&copy; 2026 <a href="https://melvin.me">Melvin Carvalho</a> &middot; MIT License &middot; <a href="https://github.com/solidpayorg/gitmark">Source</a></p>
+    </footer>
+
+  </div>
+</body>
+</html>
