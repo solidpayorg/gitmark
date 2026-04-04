@@ -167,7 +167,7 @@ describe('Trail format', () => {
     const trail = {
       version: '0.0.3',
       profile: 'gitmark',
-      publicKeyBase: pubkey,
+      pubkeyBase: pubkey,
       chain: 'tbtc4',
       states: [],
       txo: []
@@ -175,8 +175,8 @@ describe('Trail format', () => {
 
     assert.strictEqual(trail.version, '0.0.3');
     assert.strictEqual(trail.profile, 'gitmark');
-    assert.strictEqual(trail.publicKeyBase.length, 66); // compressed hex
-    assert.ok(trail.publicKeyBase.startsWith('02') || trail.publicKeyBase.startsWith('03'));
+    assert.strictEqual(trail.pubkeyBase.length, 66); // compressed hex
+    assert.ok(trail.pubkeyBase.startsWith('02') || trail.pubkeyBase.startsWith('03'));
     assert.ok(Array.isArray(trail.states));
     assert.ok(Array.isArray(trail.txo));
   });

@@ -60,7 +60,7 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 {
   "version": "0.0.3",
   "profile": "gitmark",
-  "publicKeyBase": "02abc...",
+  "pubkeyBase": "02abc...",
   "chain": "tbtc4",
   "states": ["a1b2c3", "e5f6a7"],
   "txo": [
@@ -70,7 +70,7 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 }
 ```
 
-- **publicKeyBase** — compressed pubkey (02/03 prefix), base for BIP-341 key chaining
+- **pubkeyBase** — compressed pubkey (02/03 prefix), base for BIP-341 key chaining
 - **states** — commit hashes (input to key derivation)
 - **txo** — Bitcoin anchors (TXO URIs, self-contained and verifiable)
 

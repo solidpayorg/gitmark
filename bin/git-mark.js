@@ -297,7 +297,7 @@ async function cmdInit(args) {
     '@type': 'Blocktrail',
     version: '0.0.3',
     profile: 'gitmark',
-    publicKeyBase: pubkey,
+    pubkeyBase: pubkey,
     chain,
     states: [],
     txo: []
@@ -376,7 +376,7 @@ async function cmdMark(args) {
     : hexToBytes(privkey);
 
   // Derive next address (chained through all states including current)
-  const nextPub = deriveChainedPubkey(hexToBytes(trail.publicKeyBase), allStates);
+  const nextPub = deriveChainedPubkey(hexToBytes(trail.pubkeyBase), allStates);
   const nextXonly = nextPub.slice(1);
   const nextScript = p2trScript(nextXonly);
 
@@ -411,7 +411,7 @@ async function cmdMark(args) {
     saveTrail(trail);
   }
 
-  const address = pubkeyToAddress(trail.publicKeyBase, allStates, chain);
+  const address = pubkeyToAddress(trail.pubkeyBase, allStates, chain);
   console.log(`Marked: ${head.slice(0, 8)} → ${newTxid.slice(0, 16)}...`);
   console.log(`Address: ${address}`);
   console.log(`Balance: ${outputAmount} sats`);
@@ -426,11 +426,11 @@ async function cmdInfo() {
   console.log(`Profile: ${trail.profile}`);
   console.log(`Version: ${trail.version}`);
   console.log(`Chain: ${trail.chain}`);
-  console.log(`Base public key: ${trail.publicKeyBase}`);
-  console.log(`Base address: ${pubkeyToAddress(trail.publicKeyBase, [], trail.chain)}`);
+  console.log(`Base public key: ${trail.pubkeyBase}`);
+  console.log(`Base address: ${pubkeyToAddress(trail.pubkeyBase, [], trail.chain)}`);
   console.log(`Marks: ${trail.states.length}`);
   if (trail.states.length > 0) {
-    const currentAddr = pubkeyToAddress(trail.publicKeyBase, trail.states, trail.chain);
+    const currentAddr = pubkeyToAddress(trail.pubkeyBase, trail.states, trail.chain);
     console.log(`Current address: ${currentAddr}`);
     console.log(`Last commit: ${trail.states[trail.states.length - 1]}`);
     console.log(`Last TXO: ${trail.txo[trail.txo.length - 1]}`);
@@ -455,7 +455,7 @@ async function cmdVerify() {
 
   for (let i = 0; i < trail.states.length; i++) {
     const statesUpTo = trail.states.slice(0, i + 1);
-    const expectedAddr = pubkeyToAddress(trail.publicKeyBase, statesUpTo, trail.chain);
+    const expectedAddr = pubkeyToAddress(trail.pubkeyBase, statesUpTo, trail.chain);
     const txoUri = trail.txo[i];
     const parsed = parseTxoUri(txoUri);
 
