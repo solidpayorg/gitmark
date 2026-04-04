@@ -5,7 +5,7 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
 import {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
-  pubkeyToAddress, parseTxoUri, p2trScript, CHAINS
+  pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail
 } from '../bin/git-mark.js';
 
 describe('Key chaining', () => {
@@ -187,5 +187,25 @@ describe('Trail format', () => {
       txo: ['txo:tbtc4:abc:0?commit=commit1', 'txo:tbtc4:def:0?commit=commit2']
     };
     assert.strictEqual(trail.states.length, trail.txo.length);
+  });
+
+  it('txo URIs include amount and commit params', () => {
+    const txoUri = 'txo:tbtc4:abc123:0?amount=9700&commit=deadbeef';
+    const parsed = parseTxoUri(txoUri);
+    assert.strictEqual(parsed.chain, 'tbtc4');
+    assert.strictEqual(parsed.txid, 'abc123');
+    assert.strictEqual(parsed.amount, 9700);
+  });
+});
+
+describe('Dirty flag', () => {
+  it('isDirty returns true by default (no config set)', () => {
+    assert.strictEqual(isDirty(), true);
+  });
+
+  it('loadFullTrail returns null when no trail file exists', () => {
+    // In test context there's no blocktrails.json, so should return null
+    const trail = loadFullTrail();
+    assert.strictEqual(trail, null);
   });
 });
