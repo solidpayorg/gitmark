@@ -440,6 +440,22 @@ async function cmdInfo() {
     console.log(`Current address: ${currentAddr}`);
     console.log(`Last commit: ${trail.states[trail.states.length - 1]}`);
     console.log(`Last TXO: ${trail.txo[trail.txo.length - 1]}`);
+
+    // Check confirmation status of latest tx
+    const explorer = CHAINS[trail.chain]?.explorer;
+    if (explorer && priv) {
+      try {
+        const txResp = await fetch(`${explorer}/tx/${priv.txid}`);
+        if (txResp.ok) {
+          const txData = await txResp.json();
+          if (txData.status?.confirmed) {
+            console.log(`Status: ✓ confirmed (block ${txData.status.block_height})`);
+          } else {
+            console.log(`Status: ⏳ unconfirmed`);
+          }
+        }
+      } catch (e) {}
+    }
   }
   if (priv) {
     console.log(`Balance: ${priv.amount} sats`);
