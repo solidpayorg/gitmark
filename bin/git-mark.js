@@ -455,6 +455,25 @@ async function cmdInfo() {
           }
         }
       } catch (e) {}
+
+      // Check chain depth safety
+      const numMarks = trail.states.length;
+      if (numMarks < 25) {
+        console.log(`Chain depth: safe (${numMarks} marks, under 25)`);
+      } else {
+        try {
+          const ancestorTxo = parseTxoUri(trail.txo[trail.txo.length - 24]);
+          const ancResp = await fetch(`${explorer}/tx/${ancestorTxo.txid}`);
+          if (ancResp.ok) {
+            const ancData = await ancResp.json();
+            if (ancData.status?.confirmed) {
+              console.log(`Chain depth: safe (ancestor at -24 confirmed)`);
+            } else {
+              console.log(`Chain depth: ⚠ ancestor at -24 unconfirmed`);
+            }
+          }
+        } catch (e) {}
+      }
     }
   }
   if (priv) {
