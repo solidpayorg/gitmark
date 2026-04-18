@@ -19,6 +19,9 @@ This gives you `git mark` as a native git subcommand.
 # Initialize in a git repo (tbtc4 = Bitcoin testnet4)
 git mark init --chain tbtc4 --voucher txo:tbtc4:txid:vout?amount=X&key=Y
 
+# Or read vouchers from a file (uses last line, removes on success)
+git mark init --voucher ~/faucet/vouchers.txt
+
 # Make commits, then mark them
 git commit -m "my change"
 git mark

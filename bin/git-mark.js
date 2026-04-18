@@ -18,6 +18,7 @@ import { execSync } from 'child_process';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { homedir } from 'os';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
@@ -197,6 +198,23 @@ function getPrivkey() {
 function setPrivkey(key) { gitExec(`git config --local nostr.privkey '${key}'`); }
 function isGitRoot() { return existsSync('.git'); }
 
+function resolveVoucher(arg) {
+  let path = null;
+  if (arg.startsWith('file:')) path = arg.slice(5);
+  else if (arg.endsWith('.txt')) path = arg;
+  if (!path) return { uri: arg, file: null };
+  if (path.startsWith('~')) path = path.replace('~', homedir());
+  const lines = readFileSync(path, 'utf8').split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) { console.error(`No vouchers in ${path}`); process.exit(1); }
+  return { uri: lines[lines.length - 1], file: path };
+}
+
+function consumeVoucher(path) {
+  const lines = readFileSync(path, 'utf8').split('\n').map(l => l.trim()).filter(Boolean);
+  lines.pop();
+  writeFileSync(path, lines.join('\n') + (lines.length ? '\n' : ''));
+}
+
 // --- Trail file helpers ---
 function loadTrail() {
   if (!existsSync(TRAIL_FILE)) return null;
@@ -306,7 +324,8 @@ async function cmdInit(args) {
   // Voucher funding
   const voucherIdx = args.indexOf('--voucher');
   if (voucherIdx !== -1) {
-    const voucherUri = args[voucherIdx + 1];
+    const voucherArg = args[voucherIdx + 1];
+    const { uri: voucherUri, file: voucherFile } = resolveVoucher(voucherArg);
     const txo = parseTxoUri(voucherUri);
     if (!txo.key) { console.error('Voucher must include &key= parameter'); process.exit(1); }
     if (!txo.amount) { console.error('Voucher must include &amount= parameter'); process.exit(1); }
@@ -334,6 +353,7 @@ async function cmdInit(args) {
     );
     const newTxid = await broadcastTx(rawTx, explorer);
 
+    if (voucherFile) consumeVoucher(voucherFile);
     savePrivateState({ txid: newTxid, vout: 0, amount: outputAmount }, chain);
     const xonly = pubkey.slice(2); // 64-char x-only Nostr pubkey
     // Insert @id first
@@ -535,7 +555,8 @@ function cmdUpdate() {
 export {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, buildTransaction,
-  TRAIL_FILE, PRIVATE_FILE, CHAINS, isDirty, loadTrailFromNotes, loadFullTrail
+  TRAIL_FILE, PRIVATE_FILE, CHAINS, isDirty, loadTrailFromNotes, loadFullTrail,
+  resolveVoucher, consumeVoucher
 };
 
 // --- CLI ---
