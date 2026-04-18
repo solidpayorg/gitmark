@@ -5,8 +5,12 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 
 import {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
-  pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes
+  pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes,
+  resolveVoucher, consumeVoucher
 } from '../bin/git-mark.js';
+import { writeFileSync, readFileSync, unlinkSync, mkdtempSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
 
 describe('Key chaining', () => {
   const privkey = hexToBytes('0000000000000000000000000000000000000000000000000000000000000001');
@@ -252,5 +256,58 @@ describe('TXO URI in git config format', () => {
     assert.strictEqual(parsed.txid, state.txid);
     assert.strictEqual(parsed.vout, state.vout);
     assert.strictEqual(parsed.amount, state.amount);
+  });
+});
+
+describe('Voucher resolution', () => {
+  const uri1 = 'txo:tbtc4:aaa111:0?amount=15568&key=c9cb5a57062b61afc58e5e76d8e587117ba06d2c4e9891ee658896a828e758a6';
+  const uri2 = 'txo:tbtc4:bbb222:1?amount=15568&key=c9cb5a57062b61afc58e5e76d8e587117ba06d2c4e9891ee658896a828e758a6';
+  const uri3 = 'txo:tbtc4:ccc333:2?amount=15568&key=c9cb5a57062b61afc58e5e76d8e587117ba06d2c4e9891ee658896a828e758a6';
+
+  it('returns URI as-is when not a file', () => {
+    const r = resolveVoucher(uri1);
+    assert.strictEqual(r.uri, uri1);
+    assert.strictEqual(r.file, null);
+  });
+
+  it('reads last line from .txt file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
+    const path = join(dir, 'vouchers.txt');
+    writeFileSync(path, `${uri1}\n${uri2}\n${uri3}\n`);
+    const r = resolveVoucher(path);
+    assert.strictEqual(r.uri, uri3);
+    assert.strictEqual(r.file, path);
+    unlinkSync(path);
+  });
+
+  it('reads last line when using file: prefix', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
+    const path = join(dir, 'vouchers'); // no .txt suffix
+    writeFileSync(path, `${uri1}\n${uri2}\n`);
+    const r = resolveVoucher(`file:${path}`);
+    assert.strictEqual(r.uri, uri2);
+    assert.strictEqual(r.file, path);
+    unlinkSync(path);
+  });
+
+  it('consumeVoucher removes last line', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
+    const path = join(dir, 'vouchers.txt');
+    writeFileSync(path, `${uri1}\n${uri2}\n${uri3}\n`);
+    consumeVoucher(path);
+    const remaining = readFileSync(path, 'utf8').trim().split('\n');
+    assert.strictEqual(remaining.length, 2);
+    assert.strictEqual(remaining[0], uri1);
+    assert.strictEqual(remaining[1], uri2);
+    unlinkSync(path);
+  });
+
+  it('consumeVoucher handles last remaining line', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
+    const path = join(dir, 'vouchers.txt');
+    writeFileSync(path, `${uri1}\n`);
+    consumeVoucher(path);
+    assert.strictEqual(readFileSync(path, 'utf8'), '');
+    unlinkSync(path);
   });
 });
