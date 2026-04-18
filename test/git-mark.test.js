@@ -8,9 +8,9 @@ import {
   pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes,
   resolveVoucher, consumeVoucher
 } from '../bin/git-mark.js';
-import { writeFileSync, readFileSync, mkdtempSync, rmSync, mkdirSync } from 'fs';
+import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
-import { tmpdir, homedir } from 'os';
+import { tmpdir } from 'os';
 
 describe('Key chaining', () => {
   const privkey = hexToBytes('0000000000000000000000000000000000000000000000000000000000000001');
@@ -297,18 +297,18 @@ describe('Voucher resolution', () => {
   });
 
   it('expands ~ to home directory', () => {
-    const home = homedir();
-    const testDir = join(home, '.gitmark-test-tmp');
-    mkdirSync(testDir, { recursive: true });
+    const fakeHome = mkdtempSync(join(tmpdir(), 'gitmark-home-'));
+    const originalHome = process.env.HOME;
+    process.env.HOME = fakeHome;
     try {
-      const path = join(testDir, 'vouchers.txt');
+      const path = join(fakeHome, 'vouchers.txt');
       writeFileSync(path, `${uri1}\n`);
-      const relativePath = '~' + path.slice(home.length);
-      const r = resolveVoucher(relativePath);
+      const r = resolveVoucher('~/vouchers.txt');
       assert.strictEqual(r.uri, uri1);
       assert.strictEqual(r.file, path);
     } finally {
-      rmSync(testDir, { recursive: true, force: true });
+      process.env.HOME = originalHome;
+      rmSync(fakeHome, { recursive: true, force: true });
     }
   });
 
