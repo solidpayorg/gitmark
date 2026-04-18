@@ -8,9 +8,9 @@ import {
   pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes,
   resolveVoucher, consumeVoucher
 } from '../bin/git-mark.js';
-import { writeFileSync, readFileSync, unlinkSync, mkdtempSync } from 'fs';
+import { writeFileSync, readFileSync, mkdtempSync, rmSync, mkdirSync } from 'fs';
 import { join } from 'path';
-import { tmpdir } from 'os';
+import { tmpdir, homedir } from 'os';
 
 describe('Key chaining', () => {
   const privkey = hexToBytes('0000000000000000000000000000000000000000000000000000000000000001');
@@ -272,42 +272,91 @@ describe('Voucher resolution', () => {
 
   it('reads last line from .txt file', () => {
     const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
-    const path = join(dir, 'vouchers.txt');
-    writeFileSync(path, `${uri1}\n${uri2}\n${uri3}\n`);
-    const r = resolveVoucher(path);
-    assert.strictEqual(r.uri, uri3);
-    assert.strictEqual(r.file, path);
-    unlinkSync(path);
+    try {
+      const path = join(dir, 'vouchers.txt');
+      writeFileSync(path, `${uri1}\n${uri2}\n${uri3}\n`);
+      const r = resolveVoucher(path);
+      assert.strictEqual(r.uri, uri3);
+      assert.strictEqual(r.file, path);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('reads last line when using file: prefix', () => {
     const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
-    const path = join(dir, 'vouchers'); // no .txt suffix
-    writeFileSync(path, `${uri1}\n${uri2}\n`);
-    const r = resolveVoucher(`file:${path}`);
-    assert.strictEqual(r.uri, uri2);
-    assert.strictEqual(r.file, path);
-    unlinkSync(path);
+    try {
+      const path = join(dir, 'vouchers'); // no .txt suffix
+      writeFileSync(path, `${uri1}\n${uri2}\n`);
+      const r = resolveVoucher(`file:${path}`);
+      assert.strictEqual(r.uri, uri2);
+      assert.strictEqual(r.file, path);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('expands ~ to home directory', () => {
+    const home = homedir();
+    const testDir = join(home, '.gitmark-test-tmp');
+    mkdirSync(testDir, { recursive: true });
+    try {
+      const path = join(testDir, 'vouchers.txt');
+      writeFileSync(path, `${uri1}\n`);
+      const relativePath = '~' + path.slice(home.length);
+      const r = resolveVoucher(relativePath);
+      assert.strictEqual(r.uri, uri1);
+      assert.strictEqual(r.file, path);
+    } finally {
+      rmSync(testDir, { recursive: true, force: true });
+    }
+  });
+
+  it('exits with error on empty file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
+    const originalExit = process.exit;
+    const originalError = console.error;
+    let exitCode = null;
+    let errorMsg = null;
+    process.exit = (code) => { exitCode = code; throw new Error('exit called'); };
+    console.error = (msg) => { errorMsg = msg; };
+    try {
+      const path = join(dir, 'empty.txt');
+      writeFileSync(path, '');
+      assert.throws(() => resolveVoucher(path), /exit called/);
+      assert.strictEqual(exitCode, 1);
+      assert.match(errorMsg, /No vouchers/);
+    } finally {
+      process.exit = originalExit;
+      console.error = originalError;
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('consumeVoucher removes last line', () => {
     const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
-    const path = join(dir, 'vouchers.txt');
-    writeFileSync(path, `${uri1}\n${uri2}\n${uri3}\n`);
-    consumeVoucher(path);
-    const remaining = readFileSync(path, 'utf8').trim().split('\n');
-    assert.strictEqual(remaining.length, 2);
-    assert.strictEqual(remaining[0], uri1);
-    assert.strictEqual(remaining[1], uri2);
-    unlinkSync(path);
+    try {
+      const path = join(dir, 'vouchers.txt');
+      writeFileSync(path, `${uri1}\n${uri2}\n${uri3}\n`);
+      consumeVoucher(path);
+      const remaining = readFileSync(path, 'utf8').trim().split('\n');
+      assert.strictEqual(remaining.length, 2);
+      assert.strictEqual(remaining[0], uri1);
+      assert.strictEqual(remaining[1], uri2);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('consumeVoucher handles last remaining line', () => {
     const dir = mkdtempSync(join(tmpdir(), 'gitmark-test-'));
-    const path = join(dir, 'vouchers.txt');
-    writeFileSync(path, `${uri1}\n`);
-    consumeVoucher(path);
-    assert.strictEqual(readFileSync(path, 'utf8'), '');
-    unlinkSync(path);
+    try {
+      const path = join(dir, 'vouchers.txt');
+      writeFileSync(path, `${uri1}\n`);
+      consumeVoucher(path);
+      assert.strictEqual(readFileSync(path, 'utf8'), '');
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
