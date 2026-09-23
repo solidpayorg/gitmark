@@ -41,6 +41,17 @@ Gitmark was designed to be prototyped on the bitmark chain.  But other chains wi
 
 Supported chains, bitcoin, litecoin, liquid network
 
+The `git mark` CLI uses these chain codes in its TXO URIs (`txo:<chain>:<txid>:<vout>`):
+
+| Code | Chain |
+|------|-------|
+| `btc` | Bitcoin |
+| `tbtc4` | Bitcoin testnet4 |
+| `tbtc3` | Bitcoin testnet3 |
+| `signet` | Bitcoin signet |
+| `xbt` | Bitcoin BLAKE2b, the BLAKE2b proof-of-work fork of Bitcoin |
+| `txbt4` | Bitcoin BLAKE2b testnet4 |
+
 ## Git tags
 
 The : character is not available in a git tag, so if used in a tag a possible workaround may be needed

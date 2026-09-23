@@ -6,8 +6,10 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes,
-  resolveVoucher, consumeVoucher
+  resolveVoucher, consumeVoucher, buildTransaction
 } from '../bin/git-mark.js';
+import { unifiedSighash, parseTransaction, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
+import { schnorr } from '@noble/curves/secp256k1';
 import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
@@ -75,6 +77,14 @@ describe('Address derivation', () => {
   it('generates valid mainnet address', () => {
     const addr = pubkeyToAddress(pubkey, [], 'btc');
     assert.ok(addr.startsWith('bc1p'));
+  });
+
+  it('xbt uses mainnet addresses, the same as btc', () => {
+    assert.strictEqual(pubkeyToAddress(pubkey, ['abc123'], 'xbt'), pubkeyToAddress(pubkey, ['abc123'], 'btc'));
+  });
+
+  it('txbt4 uses testnet addresses, the same as tbtc4', () => {
+    assert.strictEqual(pubkeyToAddress(pubkey, ['abc123'], 'txbt4'), pubkeyToAddress(pubkey, ['abc123'], 'tbtc4'));
   });
 
   it('different states produce different addresses', () => {
@@ -160,6 +170,23 @@ describe('Chain registry', () => {
   it('has btc', () => {
     assert.ok(CHAINS.btc);
     assert.ok(CHAINS.btc.explorer.includes('mempool.space/api'));
+  });
+
+  it('has xbt, the BLAKE2b mainnet, signing with SIGHASH_UNIFIED', () => {
+    assert.ok(CHAINS.xbt);
+    assert.strictEqual(CHAINS.xbt.hrp, 'bc');
+    assert.strictEqual(CHAINS.xbt.unified, true);
+  });
+
+  it('has txbt4, the BLAKE2b testnet4, signing with SIGHASH_UNIFIED', () => {
+    assert.ok(CHAINS.txbt4);
+    assert.ok(CHAINS.txbt4.explorer.includes('testnet4'));
+    assert.strictEqual(CHAINS.txbt4.hrp, 'tb');
+    assert.strictEqual(CHAINS.txbt4.unified, true);
+  });
+
+  it('SHA256d chains do not sign with SIGHASH_UNIFIED', () => {
+    for (const c of ['tbtc3', 'tbtc4', 'btc', 'signet']) assert.ok(!CHAINS[c].unified, c);
   });
 });
 
@@ -358,5 +385,56 @@ describe('Voucher resolution', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+describe('Unified sighash (Knots vectors)', () => {
+  const [header, ...rows] = JSON.parse(readFileSync(new URL('./unified_sighash.json', import.meta.url), 'utf8'));
+
+  it('has the expected vector layout', () => {
+    assert.strictEqual(header.join(), 'scriptCode,rawTx,inIdx,hashType,scriptType,spentOutputs,sighash');
+    assert.strictEqual(rows.length, 166);
+  });
+
+  it('matches every vector', () => {
+    for (const [scriptCodeHex, rawTx, inIdx, hashType, scriptType, spent, expected] of rows) {
+      const tx = parseTransaction(hexToBytes(rawTx));
+      const spentOutputs = spent.map(([value, script]) => ({ value: BigInt(value), script: hexToBytes(script) }));
+      const scriptCode = hexToBytes(scriptCodeHex);
+      const opts = scriptType === 3 ? { leafScript: scriptCode } : { scriptCode };
+      const got = bytesToHex(unifiedSighash(tx, inIdx, hashType, scriptType, spentOutputs, opts));
+      assert.strictEqual(got, expected, `type=${scriptType} hashType=0x${hashType.toString(16)} in=${inIdx}`);
+    }
+  });
+});
+
+describe('Signing', () => {
+  const key = hexToBytes('11'.repeat(32));
+  const xonly = secp256k1.getPublicKey(key, true).slice(1);
+  // spend an untweaked output, as a trail step does, so the signing key is the key itself
+  const input = { txid: 'ab'.repeat(32), vout: 1, amount: 10000, scriptPubKey: p2trScript(xonly) };
+  const outputs = [{ amount: 9700, scriptPubKey: p2trScript(new Uint8Array(32).fill(7)) }];
+
+  it('signs BIP341 by default: a 64-byte signature', () => {
+    const tx = parseTransaction(hexToBytes(buildTransaction(input, outputs, key)));
+    assert.strictEqual(tx.inputs[0].witness[0].length, 64);
+  });
+
+  it('signs SIGHASH_ALL|SIGHASH_UNIFIED when asked: 65 bytes ending 0x21, valid for the unified message', () => {
+    const tx = parseTransaction(hexToBytes(buildTransaction(input, outputs, key, { unified: true })));
+    const sig = tx.inputs[0].witness[0];
+    assert.strictEqual(sig.length, 65);
+    assert.strictEqual(sig[64], 0x21);
+    const spent = [{ value: BigInt(input.amount), script: input.scriptPubKey }];
+    const msg = unifiedSighash(tx, 0, 0x21, SCRIPT_TYPE_TAPROOT, spent);
+    assert.ok(schnorr.verify(sig.slice(0, 64), msg, xonly));
+  });
+
+  it('the unified signature does not verify against the BIP341 message', () => {
+    const plain = parseTransaction(hexToBytes(buildTransaction(input, outputs, key)));
+    const unified = parseTransaction(hexToBytes(buildTransaction(input, outputs, key, { unified: true })));
+    const bip341 = taggedHash('TapSighash', hexToBytes('0000'));   // any BIP341 message will do
+    assert.ok(!schnorr.verify(unified.inputs[0].witness[0].slice(0, 64), bip341, xonly));
+    assert.notDeepStrictEqual(plain.inputs[0].witness[0], unified.inputs[0].witness[0].slice(0, 64));
   });
 });
