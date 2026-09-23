@@ -19,6 +19,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { homedir } from 'os';
+import { unifiedSighash, SIGHASH_ALL, SIGHASH_UNIFIED, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
@@ -29,11 +30,15 @@ const TRAIL_FILE = 'blocktrails.json';
 const PRIVATE_FILE = '.git/blocktrails.json';
 const DEFAULT_CHAIN = 'tbtc4';
 
+// unified: sign with SIGHASH_UNIFIED, so the transaction cannot be replayed onto the SHA256d chain
+// that the BLAKE2b forks share history with.
 const CHAINS = {
-  tbtc3:  { explorer: 'https://mempool.space/testnet/api', name: 'Bitcoin Testnet3' },
-  tbtc4:  { explorer: 'https://mempool.space/testnet4/api', name: 'Bitcoin Testnet4' },
-  btc:    { explorer: 'https://mempool.space/api', name: 'Bitcoin' },
-  signet: { explorer: 'https://mempool.space/signet/api', name: 'Bitcoin Signet' },
+  tbtc3:  { explorer: 'https://mempool.space/testnet/api', name: 'Bitcoin Testnet3', hrp: 'tb' },
+  tbtc4:  { explorer: 'https://mempool.space/testnet4/api', name: 'Bitcoin Testnet4', hrp: 'tb' },
+  btc:    { explorer: 'https://mempool.space/api', name: 'Bitcoin', hrp: 'bc' },
+  signet: { explorer: 'https://mempool.space/signet/api', name: 'Bitcoin Signet', hrp: 'tb' },
+  xbt:    { explorer: 'https://mempool.kilombino.com/api', name: 'Bitcoin BLAKE2b', hrp: 'bc', unified: true },
+  txbt4:  { explorer: 'https://mempool.guide/testnet4/api', name: 'Bitcoin BLAKE2b Testnet4', hrp: 'tb', unified: true },
 };
 
 // --- Blocktrails key chaining (BIP-341) ---
@@ -105,7 +110,7 @@ function pubkeyToAddress(pubkeyHex, states, chain) {
   const pubBytes = hexToBytes(pubkeyHex);
   const derived = states.length > 0 ? deriveChainedPubkey(pubBytes, states) : pubBytes;
   const xOnly = derived.slice(1);
-  const hrp = chain === 'btc' ? 'bc' : 'tb';
+  const hrp = CHAINS[chain]?.hrp ?? 'tb';
   return bech32mEncode(hrp, 1, xOnly);
 }
 
@@ -125,7 +130,7 @@ function writeU64LE(n) { const b = new Uint8Array(8); let v = BigInt(n); for (le
 function concatBytes(...arrays) { const r = new Uint8Array(arrays.reduce((s, a) => s + a.length, 0)); let o = 0; for (const a of arrays) { r.set(a, o); o += a.length; } return r; }
 function reverseTxid(txid) { return hexToBytes(txid).reverse(); }
 
-function buildTransaction(input, outputs, privkeyBytes) {
+function buildTransaction(input, outputs, privkeyBytes, { unified = false } = {}) {
   const inputs = [input];
   const internalXOnly = new Uint8Array(secp256k1.getPublicKey(privkeyBytes, true)).slice(1);
   const untweakedHex = '5120' + bytesToHex(internalXOnly);
@@ -152,7 +157,21 @@ function buildTransaction(input, outputs, privkeyBytes) {
   const shaOutputs = sha256(concatBytes(...serOutputs));
 
   const sigs = [];
-  for (let i = 0; i < inputs.length; i++) {
+  if (unified) {
+    // SIGHASH_ALL | SIGHASH_UNIFIED, carried as a 65th byte on the signature
+    const hashType = SIGHASH_ALL | SIGHASH_UNIFIED;
+    const tx = {
+      version, locktime,
+      inputs: inputs.map(i => ({ txid: reverseTxid(i.txid), vout: i.vout, sequence })),
+      outputs: outputs.map(o => ({ value: o.amount, script: o.scriptPubKey })),
+    };
+    const spent = inputs.map(i => ({ value: i.amount, script: i.scriptPubKey }));
+    for (let i = 0; i < inputs.length; i++) {
+      const sighash = unifiedSighash(tx, i, hashType, SCRIPT_TYPE_TAPROOT, spent);
+      sigs.push(concatBytes(schnorr.sign(sighash, signingKey), new Uint8Array([hashType])));
+    }
+  }
+  for (let i = 0; !unified && i < inputs.length; i++) {
     const sigMsg = concatBytes(
       new Uint8Array([0x00, 0x00]),
       writeU32LE(version), writeU32LE(locktime),
@@ -349,7 +368,8 @@ async function cmdInit(args) {
     const rawTx = buildTransaction(
       { txid: txo.txid, vout: txo.vout, amount: txo.amount, scriptPubKey: hexToBytes(prevOut.scriptpubkey) },
       [{ amount: outputAmount, scriptPubKey: baseScript }],
-      voucherKey
+      voucherKey,
+      { unified: !!CHAINS[chain].unified }
     );
     const newTxid = await broadcastTx(rawTx, explorer);
 
@@ -420,7 +440,8 @@ async function cmdMark(args) {
   const rawTx = buildTransaction(
     { txid: priv.txid, vout: priv.vout, amount: priv.amount, scriptPubKey: hexToBytes(prevOut.scriptpubkey) },
     [{ amount: outputAmount, scriptPubKey: nextScript }],
-    signingKey
+    signingKey,
+    { unified: !!CHAINS[chain].unified }
   );
   const newTxid = await broadcastTx(rawTx, explorer);
 

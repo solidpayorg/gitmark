@@ -33,6 +33,21 @@ git mark verify
 git mark info
 ```
 
+## Chains
+
+Pick one with `--chain` at `git mark init`. It's recorded in `blocktrails.json` and used for every later mark.
+
+| Chain | Network | Addresses | Explorer API |
+|-------|---------|-----------|--------------|
+| `tbtc4` (default) | Bitcoin testnet4 | `tb1p…` | mempool.space/testnet4 |
+| `tbtc3` | Bitcoin testnet3 | `tb1p…` | mempool.space/testnet |
+| `signet` | Bitcoin signet | `tb1p…` | mempool.space/signet |
+| `btc` | Bitcoin | `bc1p…` | mempool.space |
+| `xbt` | BLAKE2b fork of Bitcoin, from block 961,640 | `bc1p…` | mempool.kilombino.com |
+| `txbt4` | BLAKE2b fork of testnet4, from block 150,308 | `tb1p…` | mempool.guide/testnet4 |
+
+On `xbt` and `txbt4`, marks are signed with `SIGHASH_UNIFIED` ([spec](https://github.com/bitcoin-blake/blaketest/blob/gh-pages/unified-sighash.md)): a 65-byte signature ending `0x21` that Knots accepts on the BLAKE2b chains and SHA256d nodes reject. Coins from before the fork exist on both chains, so without this a mark could be replayed onto the original chain. `lib/unified-sighash.js` implements it and passes Knots's 166 test vectors (`test/unified_sighash.json`).
+
 ## How It Works
 
 Each `git mark` creates a real Bitcoin transaction. The address is derived from your key + the commit hash using BIP-341 taproot key chaining:
