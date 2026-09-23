@@ -9,6 +9,7 @@
  *   git mark info
  *   git mark verify
  *   git mark update
+ *   git mark badge [--branch name]
  */
 
 import { secp256k1, schnorr } from '@noble/curves/secp256k1';
@@ -565,6 +566,48 @@ async function cmdVerify() {
   process.exit(ok ? 0 : 1);
 }
 
+// --- Badge ---
+// owner/repo from a GitHub remote URL (https, ssh or scp form), or null
+function parseGithubRemote(url) {
+  const m = String(url || '').trim().match(/^(?:https?:\/\/|ssh:\/\/git@|git@)github\.com[:/]([^/]+)\/(.+?)(?:\.git)?\/?$/);
+  return m ? { owner: m[1], repo: m[2] } : null;
+}
+
+// the explorer's web page for a transaction: its API base without /api
+function explorerTxUrl(chain, txid) {
+  const api = CHAINS[chain]?.explorer;
+  return api ? `${api.replace(/\/api$/, '')}/tx/${txid}` : null;
+}
+
+// Markdown for a shields.io dynamic JSON badge counting the marks in the pushed trail file.
+// trailUrl: where the raw blocktrails.json is served; link: where the badge points.
+function badgeMarkdown({ trailUrl, chain, link }) {
+  const q = new URLSearchParams({ url: trailUrl, query: '$.states.length', label: 'gitmarks', suffix: ` · ${chain}`, color: 'f7931a' });
+  const img = `https://img.shields.io/badge/dynamic/json?${q.toString().replace(/\+/g, '%20')}`;
+  return `[![gitmarks](${img})](${link})`;
+}
+
+function cmdBadge(args) {
+  const trail = loadFullTrail();
+  if (!trail) { console.error(`No ${TRAIL_FILE} found. Run: git mark init`); process.exit(1); }
+  const branchIdx = args.indexOf('--branch');
+  const quiet = (cmd) => { try { return execSync(cmd, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return ''; } };
+  const branch = (branchIdx !== -1 ? args[branchIdx + 1] : null) || quiet('git symbolic-ref --short HEAD') || 'main';
+  const remote = quiet('git remote get-url origin');
+  const gh = parseGithubRemote(remote);
+
+  // the latest mark; before the first one, the badge links to the trail file instead
+  const lastTxid = trail.txo.length ? parseTxoUri(trail.txo[trail.txo.length - 1]).txid : null;
+  const trailUrl = gh
+    ? `https://raw.githubusercontent.com/${gh.owner}/${gh.repo}/${branch}/${TRAIL_FILE}`
+    : 'RAW_TRAIL_URL';
+  const link = (lastTxid && explorerTxUrl(trail.chain, lastTxid))
+    || (gh ? `https://github.com/${gh.owner}/${gh.repo}/blob/${branch}/${TRAIL_FILE}` : 'TRAIL_LINK');
+
+  console.log(badgeMarkdown({ trailUrl, chain: trail.chain, link }));
+  if (!gh) console.error(`\nOrigin is not on GitHub: replace RAW_TRAIL_URL with the URL-encoded address the pushed ${TRAIL_FILE} is served from, and TRAIL_LINK with where the badge should point.`);
+}
+
 function cmdUpdate() {
   const trail = loadTrailFromNotes();
   if (!trail) { console.error(`No ${TRAIL_FILE} found. Run: git mark init`); process.exit(1); }
@@ -577,7 +620,8 @@ export {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, buildTransaction,
   TRAIL_FILE, PRIVATE_FILE, CHAINS, isDirty, loadTrailFromNotes, loadFullTrail,
-  resolveVoucher, consumeVoucher
+  resolveVoucher, consumeVoucher,
+  parseGithubRemote, explorerTxUrl, badgeMarkdown
 };
 
 // --- CLI ---
@@ -596,6 +640,8 @@ if (isMain) {
     cmdVerify();
   } else if (cmd === 'update') {
     cmdUpdate();
+  } else if (cmd === 'badge') {
+    cmdBadge(args.slice(1));
   } else if (cmd === 'mark' || !cmd || (cmd && !cmd.startsWith('-'))) {
     if (!existsSync(TRAIL_FILE) && cmd !== 'mark') {
       console.log('Usage:');
@@ -604,6 +650,7 @@ if (isMain) {
       console.log('  git mark info             # show trail state');
       console.log('  git mark verify           # verify trail against Bitcoin');
       console.log('  git mark update           # update blocktrails.json from git notes');
+      console.log('  git mark badge            # print README badge markdown');
     } else {
       cmdMark(args.slice(cmd === 'mark' ? 1 : 0));
     }
@@ -613,5 +660,6 @@ if (isMain) {
     console.log('  git mark                  # anchor HEAD to Bitcoin');
     console.log('  git mark info             # show trail state');
     console.log('  git mark verify           # verify trail against Bitcoin');
+    console.log('  git mark badge            # print README badge markdown');
   }
 }

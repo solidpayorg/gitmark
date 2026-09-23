@@ -68,7 +68,16 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 | `git mark info` | Show trail state, balance, addresses |
 | `git mark verify` | Verify all marks against Bitcoin |
 | `git mark update` | Update blocktrails.json from git notes |
+| `git mark badge` | Print README badge markdown. Option: `--branch` |
 | `git mark --version` | Show version |
+
+## Badge
+
+`git mark badge` prints markdown for a README badge, built from the `origin` remote, the current branch (or `--branch`) and `blocktrails.json`. For example, this is the badge for [melvincarvalho/delivery-day](https://github.com/melvincarvalho/delivery-day), whose trail is on txbt4:
+
+[![gitmarks](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmelvincarvalho%2Fdelivery-day%2Fgh-pages%2Fblocktrails.json&query=%24.states.length&label=gitmarks&suffix=%20%C2%B7%20txbt4&color=f7931a)](https://mempool.guide/testnet4/tx/8129190799de150153bdae7d1092c4cd505874e842cfbf429ac452956025fa51)
+
+It's a shields.io [dynamic JSON badge](https://shields.io/badges/dynamic-json-badge) that counts `states` in the pushed trail file, and links to the latest mark on the chain's explorer. The count updates whenever `blocktrails.json` is pushed, so it shows what the repo records. `git mark verify` checks it against the chain. For remotes not on GitHub, it prints `RAW_TRAIL_URL` and `TRAIL_LINK` placeholders to fill in.
 
 ## Trail File
 
