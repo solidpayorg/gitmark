@@ -596,8 +596,8 @@ function cmdBadge(args) {
   const remote = quiet('git remote get-url origin');
   const gh = parseGithubRemote(remote);
 
-  const last = trail.txo.length ? trail.txo[trail.txo.length - 1] : trail['@id'];
-  const lastTxid = last ? parseTxoUri(last).txid : null;
+  // the latest mark; before the first one, the badge links to the trail file instead
+  const lastTxid = trail.txo.length ? parseTxoUri(trail.txo[trail.txo.length - 1]).txid : null;
   const trailUrl = gh
     ? `https://raw.githubusercontent.com/${gh.owner}/${gh.repo}/${branch}/${TRAIL_FILE}`
     : 'RAW_TRAIL_URL';

@@ -73,7 +73,7 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 
 ## Badge
 
-`git mark badge` prints markdown for a README badge, built from the `origin` remote, the current branch (or `--branch`) and `blocktrails.json`:
+`git mark badge` prints markdown for a README badge, built from the `origin` remote, the current branch (or `--branch`) and `blocktrails.json`. For example, this is the badge for [melvincarvalho/delivery-day](https://github.com/melvincarvalho/delivery-day), whose trail is on txbt4:
 
 [![gitmarks](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmelvincarvalho%2Fdelivery-day%2Fgh-pages%2Fblocktrails.json&query=%24.states.length&label=gitmarks&suffix=%20%C2%B7%20txbt4&color=f7931a)](https://mempool.guide/testnet4/tx/8129190799de150153bdae7d1092c4cd505874e842cfbf429ac452956025fa51)
 
