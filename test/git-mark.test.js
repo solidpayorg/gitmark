@@ -6,7 +6,8 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes,
-  resolveVoucher, consumeVoucher, buildTransaction
+  resolveVoucher, consumeVoucher, buildTransaction,
+  parseGithubRemote, explorerTxUrl, badgeMarkdown
 } from '../bin/git-mark.js';
 import { unifiedSighash, parseTransaction, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
 import { schnorr } from '@noble/curves/secp256k1';
@@ -436,5 +437,39 @@ describe('Signing', () => {
     const bip341 = taggedHash('TapSighash', hexToBytes('0000'));   // any BIP341 message will do
     assert.ok(!schnorr.verify(unified.inputs[0].witness[0].slice(0, 64), bip341, xonly));
     assert.notDeepStrictEqual(plain.inputs[0].witness[0], unified.inputs[0].witness[0].slice(0, 64));
+  });
+});
+
+describe('Badge', () => {
+  it('reads owner and repo from GitHub remotes in every form', () => {
+    for (const url of [
+      'https://github.com/melvincarvalho/delivery-day.git',
+      'https://github.com/melvincarvalho/delivery-day',
+      'git@github.com:melvincarvalho/delivery-day.git',
+      'ssh://git@github.com/melvincarvalho/delivery-day.git',
+    ]) assert.deepStrictEqual(parseGithubRemote(url), { owner: 'melvincarvalho', repo: 'delivery-day' }, url);
+  });
+
+  it('returns null for remotes not on GitHub', () => {
+    assert.strictEqual(parseGithubRemote('https://gitlab.com/a/b.git'), null);
+    assert.strictEqual(parseGithubRemote(''), null);
+  });
+
+  it('links a transaction on the chain explorer', () => {
+    assert.strictEqual(explorerTxUrl('txbt4', 'ab'), 'https://mempool.guide/testnet4/tx/ab');
+    assert.strictEqual(explorerTxUrl('xbt', 'ab'), 'https://mempool.kilombino.com/tx/ab');
+    assert.strictEqual(explorerTxUrl('btc', 'ab'), 'https://mempool.space/tx/ab');
+    assert.strictEqual(explorerTxUrl('nope', 'ab'), null);
+  });
+
+  it('builds a shields.io dynamic JSON badge counting states', () => {
+    const md = badgeMarkdown({
+      trailUrl: 'https://raw.githubusercontent.com/melvincarvalho/delivery-day/gh-pages/blocktrails.json',
+      chain: 'txbt4',
+      link: 'https://mempool.guide/testnet4/tx/ab',
+    });
+    assert.strictEqual(md,
+      '[![gitmarks](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmelvincarvalho%2Fdelivery-day%2Fgh-pages%2Fblocktrails.json' +
+      '&query=%24.states.length&label=gitmarks&suffix=%20%C2%B7%20txbt4&color=f7931a)](https://mempool.guide/testnet4/tx/ab)');
   });
 });
