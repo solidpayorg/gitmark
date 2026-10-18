@@ -48,6 +48,10 @@ const CHAINS = {
   txbt4:  { explorer: 'https://mempool.guide/testnet4/api', name: 'Bitcoin BLAKE2b Testnet4', hrp: 'tb', unified: true },
 };
 
+// The explorer API for a chain. GITMARK_EXPLORER points every command at another esplora-style API,
+// for a local explorer or a test stub.
+function explorerFor(chain) { return process.env.GITMARK_EXPLORER || CHAINS[chain]?.explorer; }
+
 // --- Blocktrails key chaining (BIP-341) ---
 function taggedHash(tag, ...msgs) {
   const tagHash = sha256(new TextEncoder().encode(tag));
@@ -391,7 +395,7 @@ async function cmdInit(args) {
     const baseScript = p2trScript(baseXonly);
 
     // Fetch voucher scriptPubKey
-    const explorer = CHAINS[chain].explorer;
+    const explorer = explorerFor(chain);
     const txResp = await fetch(`${explorer}/tx/${txo.txid}`);
     if (!txResp.ok) { console.error('Could not fetch voucher transaction'); process.exit(1); }
     const txData = await txResp.json();
@@ -445,7 +449,7 @@ async function cmdInit(args) {
 // Look the base address up on the chain's explorer; if a coin is there, make it the trail's funding
 async function adoptFunding(address, chain, xonly, trail) {
   let found = null;
-  try { found = await findFunding(address, CHAINS[chain].explorer); } catch (e) { console.error(`Explorer lookup failed: ${e.message}`); }
+  try { found = await findFunding(address, explorerFor(chain)); } catch (e) { console.error(`Explorer lookup failed: ${e.message}`); }
   if (!found) return null;
   savePrivateState({ txid: found.txid, vout: found.vout, amount: found.amount }, chain);
   if (trail && !trail['@id']) {
@@ -480,7 +484,7 @@ async function cmdMark(args) {
     process.exit(1);
   }
   const chain = trail.chain;
-  const explorer = CHAINS[chain]?.explorer;
+  const explorer = explorerFor(chain);
   if (!explorer) { console.error(`Unknown chain: ${chain}`); process.exit(1); }
 
   // All previous states + current commit
@@ -554,7 +558,7 @@ async function cmdExodus(args) {
   const dest = args.find(a => !a.startsWith('-'));
   if (!dest) { console.error('Usage: git mark exodus <address> [--dry]'); process.exit(1); }
   const chain = trail.chain;
-  const explorer = CHAINS[chain]?.explorer;
+  const explorer = explorerFor(chain);
   if (!explorer) { console.error(`Unknown chain: ${chain}`); process.exit(1); }
   let destScript;
   try { destScript = addressToScript(dest, chain); } catch (e) { console.error(e.message); process.exit(1); }
@@ -662,7 +666,7 @@ async function cmdInfo() {
     console.log(`Last TXO: ${trail.txo[trail.txo.length - 1]}`);
 
     // Check confirmation status of latest tx
-    const explorer = CHAINS[trail.chain]?.explorer;
+    const explorer = explorerFor(trail.chain);
     if (explorer && priv) {
       try {
         const txResp = await fetch(`${explorer}/tx/${priv.txid}`);
@@ -725,7 +729,7 @@ async function cmdVerify() {
     const parsed = parseTxoUri(txoUri);
 
     try {
-      const resp = await fetch(`${chain.explorer}/tx/${parsed.txid}`);
+      const resp = await fetch(`${explorerFor(parsed.chain)}/tx/${parsed.txid}`);
       if (!resp.ok) { console.log(`  [${i}] FAIL — tx not found: ${parsed.txid.slice(0, 16)}...`); ok = false; continue; }
       const txData = await resp.json();
       const out = txData.vout?.[parsed.vout];
@@ -757,7 +761,7 @@ function parseGithubRemote(url) {
 
 // the explorer's web page for a transaction: its API base without /api
 function explorerTxUrl(chain, txid) {
-  const api = CHAINS[chain]?.explorer;
+  const api = explorerFor(chain);
   return api ? `${api.replace(/\/api$/, '')}/tx/${txid}` : null;
 }
 
@@ -802,7 +806,7 @@ export {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, buildTransaction,
   TRAIL_FILE, PRIVATE_FILE, CHAINS, isDirty, loadTrailFromNotes, loadFullTrail,
-  resolveVoucher, consumeVoucher, findFunding, addressToScript,
+  resolveVoucher, consumeVoucher, findFunding, addressToScript, explorerFor,
   parseGithubRemote, explorerTxUrl, badgeMarkdown
 };
 

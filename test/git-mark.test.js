@@ -17,6 +17,7 @@ import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'fs';
 import cp from 'child_process';
 import { join } from 'path';
 import { tmpdir } from 'os';
+import { createServer } from 'node:http';
 
 describe('Key chaining', () => {
   const privkey = hexToBytes('0000000000000000000000000000000000000000000000000000000000000001');
@@ -649,5 +650,65 @@ describe('CLI guards', () => {
     assert.strictEqual(e.status, 1);
     assert.match(e.stderr, /already closed/);
     rmSync(dir, { recursive: true });
+  });
+
+  // The spend itself, against a stub explorer: one input at the chained address, one output to the
+  // destination, signed for the unified message. A dry run broadcasts and records nothing.
+  it('exodus --dry builds a signed spend of the trail coin to the address and changes nothing', async () => {
+    const { dir, env, head } = repo();
+    const key = hexToBytes('11'.repeat(32));
+    const pub = bytesToHex(secp256k1.getPublicKey(key, true));
+    const chainedXonly = secp256k1.getPublicKey(deriveChainedPrivkey(key, [head]), true).slice(1);
+    const coinTxid = 'ab'.repeat(32);
+    const txo = `txo:txbt4:${coinTxid}:0?amount=9700&commit=${head}`;
+    const dest = pubkeyToAddress(bytesToHex(secp256k1.getPublicKey(hexToBytes('22'.repeat(32)), true)), [], 'txbt4');
+    execFileSync('git', ['config', '--local', 'nostr.privkey', '11'.repeat(32)], { cwd: dir, env });
+    execFileSync('git', ['config', '--local', 'gitmark.txo', txo], { cwd: dir, env });
+    writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [head], txo: [txo] }));
+
+    const hits = [];
+    const server = createServer((req, res) => {
+      hits.push(`${req.method} ${req.url}`);
+      if (req.method === 'GET' && req.url === `/tx/${coinTxid}`) {
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ txid: coinTxid, vout: [{ scriptpubkey: bytesToHex(p2trScript(chainedXonly)), value: 9700 }] }));
+      } else { res.statusCode = 404; res.end('not stubbed'); }
+    });
+    await new Promise(r => server.listen(0, '127.0.0.1', r));
+    const explorer = `http://127.0.0.1:${server.address().port}`;
+    try {
+      const r = await new Promise((resolve) => {
+        const c = cp.spawn(process.execPath, [bin, 'exodus', dest, '--dry'], { cwd: dir, env: { ...env, GITMARK_EXPLORER: explorer } });
+        let stdout = '', stderr = '';
+        c.stdout.on('data', d => { stdout += d; });
+        c.stderr.on('data', d => { stderr += d; });
+        c.on('close', status => resolve({ status, stdout, stderr }));
+      });
+      assert.strictEqual(r.status, 0, r.stderr);
+      assert.match(r.stdout, /Send:\s+9400 sats \(fee 300\)/);
+      assert.match(r.stdout, /Dry run: nothing broadcast/);
+      const raw = r.stdout.match(/^Raw:\s+([0-9a-f]+)$/m)[1];
+      const tx = parseTransaction(hexToBytes(raw));
+      assert.strictEqual(tx.inputs.length, 1);
+      assert.strictEqual(bytesToHex(Uint8Array.from(tx.inputs[0].txid).reverse()), coinTxid);
+      assert.strictEqual(tx.inputs[0].vout, 0);
+      assert.strictEqual(tx.outputs.length, 1);
+      assert.strictEqual(tx.outputs[0].value, 9400n);
+      assert.deepStrictEqual(tx.outputs[0].script, addressToScript(dest, 'txbt4'));
+      const sig = tx.inputs[0].witness[0];
+      assert.strictEqual(sig.length, 65);
+      assert.strictEqual(sig[64], 0x21);
+      const msg = unifiedSighash(tx, 0, 0x21, SCRIPT_TYPE_TAPROOT, [{ value: 9700n, script: p2trScript(chainedXonly) }]);
+      assert.ok(schnorr.verify(sig.slice(0, 64), msg, chainedXonly), 'signature is for the chained key');
+      // read only: one lookup, no broadcast
+      assert.deepStrictEqual(hits, [`GET /tx/${coinTxid}`]);
+      // nothing recorded
+      assert.strictEqual(execFileSync('git', ['config', '--local', 'gitmark.txo'], { cwd: dir, env, encoding: 'utf8' }).trim(), txo);
+      assert.strictEqual(cp.spawnSync('git', ['config', '--local', 'gitmark.exodus'], { cwd: dir, env }).status, 1);
+      assert.ok(!('exodus' in JSON.parse(readFileSync(join(dir, 'blocktrails.json'), 'utf8'))));
+    } finally {
+      server.close();
+      rmSync(dir, { recursive: true });
+    }
   });
 });
