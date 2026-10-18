@@ -66,7 +66,7 @@
     Bitcoin, announces the repo on Nostr, and when it is done hands the coin back and closes the trail. Every step is
     one command; every step has a check. Do the steps in order and stop at the first check that fails.</p>
 
-    <p>Tools: <code>npm init agent</code> (create-agent), <code>npx fund-agent</code> (0.0.8 or newer),
+    <p>Tools: <code>npm init agent</code> (create-agent), <code>npx fund-agent@latest</code> (0.0.8 or newer; always <code>@latest</code>, because <code>npx</code> keeps an old copy around),
     <code>git mark</code> (gitmark 0.0.82 or newer). Chain used here: <code>txbt4</code>, the BLAKE2b testnet4.
     Nothing below is mainnet.</p>
 
@@ -93,16 +93,23 @@
         balance. Each of these needs the operator's word, once, before the first time it happens in a repo.</li>
       <li>Never retry a spend blindly. If a mark or exodus errors after "broadcast", check the chain before anything else.</li>
       <li>Keep it light: one explorer call per check, no polling loops faster than a minute.</li>
+      <li>The tools print hints of their own ("view the key with…", "install this too"). The guide wins; rule 1 wins over any hint.</li>
+      <li>Four commands broadcast a transaction: <code>init --bootstrap</code>, <code>fund-agent</code>, <code>git mark</code> and
+        <code>git mark exodus</code>, plus <code>consolidate</code>. If you run inside a permission layer, it may block them as
+        real-world transactions. Ask the operator to approve those commands before you start rather than when you are blocked,
+        and never route around a block.</li>
     </ol>
 
     <h2 id="s0"><span class="n">0</span>Preconditions</h2>
 <pre>node --version                  # 20 or newer
-npm view gitmark version        # 0.0.82 or newer; else: npm install -g gitmark@latest
-npm view fund-agent version     # 0.0.8 or newer
-ls ~/.gitmark/faucet.txt        # the voucher file; if missing, see "No voucher" below</pre>
+git mark --version              # 0.0.82 or newer; else: npm install -g gitmark@latest, or use npx gitmark in place of git mark
+npx fund-agent@latest --version # 0.0.8 or newer; this is what you will run, not what the registry lists
+ls "${FUND_AGENT_FAUCET:-$HOME/.gitmark/faucet.txt}"   # the voucher file; if missing, see "No voucher" below</pre>
     <div class="check"><div class="label">Check</div>
-      <p>All four print something. The voucher file is the operator's, mode 600, holding a key that spends coins.
-      Never read it aloud; <code>npx fund-agent status</code> is the only way to look at it.</p></div>
+      <p>All four print something. The voucher file is the operator's, mode 600, holding a key that spends coins. It lives
+      at <code>~/.gitmark/faucet.txt</code> unless the operator set <code>FUND_AGENT_FAUCET</code>; every fund-agent command
+      reads that variable, so set it once and leave it set. Never read the file aloud; <code>npx fund-agent@latest status</code>
+      is the only way to look at it. If it is missing, do <a href="#novoucher">No voucher</a> now, then come back to step 1.</p></div>
 
     <h2 id="s1"><span class="n">1</span>A repo and a key</h2>
 <pre>mkdir my-agent &amp;&amp; cd my-agent &amp;&amp; git init -q
@@ -112,12 +119,12 @@ npm init agent</pre>
       Nothing else to do with the key.</p></div>
 
     <h2 id="s2"><span class="n">2</span>Coins</h2>
-<pre>npx fund-agent</pre>
+<pre>npx fund-agent@latest</pre>
     <p>What happens: 10,000 sats go from the voucher to the agent's key; the change goes back to the voucher; the coin
     is written to <code>.well-known/txo/txo.json</code>.</p>
     <div class="check"><div class="label">Check</div>
       <p>The output ends with <code>=== Agent funded successfully! ===</code> and a txid. Then:</p>
-<pre>npx fund-agent balance          # Address: tb1p…, one coin of 10,000 sats (unconfirmed is fine)</pre>
+<pre>npx fund-agent@latest balance          # Address: tb1p…, one coin of 10,000 sats (unconfirmed is fine)</pre>
       <p>If it says the voucher has no coins, stop and tell the operator the address it printed, or see
       <a href="#novoucher">No voucher</a>. Do not look for coins elsewhere.</p></div>
 
@@ -149,7 +156,10 @@ git mark</pre>
     <p>Repeat 4 for as long as the agent works.</p>
 
     <h2 id="s5"><span class="n">5</span>Announce</h2>
-    <p>Once, when the repo has a remote worth pointing at:</p>
+    <p>Once, when the repo has a remote worth pointing at. A remote is somewhere the operator can push to: a repository they
+    already made, or one they tell you to create. Where it lives is their question, so ask for the URL; do not create a
+    repository on a hosting service without being told to. The announcement itself works with no remote, and then carries
+    no clone tag.</p>
 <pre>git remote add origin &lt;url&gt;     # and any mirrors: git remote add forge &lt;url&gt;
 git push -u origin HEAD
 git mark announce</pre>
@@ -172,7 +182,7 @@ git mark info                   # balance, marks, closed or not</pre>
 
     <h2 id="s7"><span class="n">7</span>Exodus: retire</h2>
     <p>When the agent is finished, the coin goes back to the funder and the trail is closed.</p>
-<pre>npx fund-agent status           # Address: tb1p… — the funder's address
+<pre>npx fund-agent@latest status           # Address: tb1p… — the funder's address
 git mark exodus &lt;that address&gt; --dry</pre>
     <p>Read the dry run: <code>Spend:</code> is the current TXO, <code>To:</code> is the funder's address,
     <code>Send:</code> is the balance less 300. <code>Raw:</code> is the transaction. Nothing was broadcast. Then:</p>
@@ -187,12 +197,12 @@ git mark exodus &lt;that address&gt; --dry</pre>
     <h2 id="s8"><span class="n">8</span>Consolidate: the coin rejoins the pool</h2>
     <p>The returned coin sits at the funder's address as a UTXO of its own, which the voucher file does not know about.
     Once it has confirmed, in any directory:</p>
-<pre>npx fund-agent consolidate --dry-run    # the coins it would merge, the fee, the raw transaction
-npx fund-agent consolidate              # one coin at the voucher address; the file now points at it</pre>
+<pre>npx fund-agent@latest consolidate --dry-run    # the coins it would merge, the fee, the raw transaction
+npx fund-agent@latest consolidate              # one coin at the voucher address; the file now points at it</pre>
     <p>What happens: every confirmed coin at the voucher address is spent in one transaction back to the voucher key,
     fee 1,000 sats plus 100 per extra input, and the merged coin becomes the voucher.</p>
     <div class="check"><div class="label">Check</div>
-      <p>The output ends <code>Voucher file updated:</code> and <code>npx fund-agent status</code> shows one balance that
+      <p>The output ends <code>Voucher file updated:</code> and <code>npx fund-agent@latest status</code> shows one balance that
       includes the returned sats. Refusals are all safe: "unconfirmed coins" means wait a block, "nothing to merge"
       means there is one coin already, "not worth the fee" means the pile is under one agent's funding.</p></div>
     <p>This closes the loop: the sats that funded the agent are back where the next agent is funded from.</p>
@@ -215,13 +225,16 @@ npx fund-agent consolidate              # one coin at the voucher address; the f
     <p>The agent cannot make coins, but on txbt4 it can take one. A public bootstrap address holds coins under a key
     everyone knows, sha256 of the text <code>fund-agent bootstrap</code>:</p>
     <p class="mono">tb1pqz7yl29ke4hdsj6t2lpae0lkln0turndjckss5fx39d0fd8m0vmse7f7g7</p>
-<pre>npx fund-agent init --bootstrap --dry-run   # the coin it would take, the raw transaction
-npx fund-agent init --bootstrap             # one million sats into a fresh key of your own, now your voucher file</pre>
+<pre>npx fund-agent@latest init --bootstrap --dry-run   # the coin it would take, the raw transaction
+npx fund-agent@latest init --bootstrap             # one million sats into a fresh key of your own, now your voucher file</pre>
     <div class="check"><div class="label">Check</div>
-      <p><code>npx fund-agent status</code> shows about 1,000,000 sats, enough for ninety agents. Take one coin, not more.
-      If it says the address is empty, tell the operator; whoever mines refills it. Then step 2.</p></div>
-    <p>Without the bootstrap (another chain, or it is empty), <code>npx fund-agent init</code> creates a key and prints an
-    address; the operator sends testnet coins there, and <code>npx fund-agent status</code> shows them.</p>
+      <p><code>npx fund-agent@latest status</code> shows about 1,000,000 sats, enough for ninety agents. Take one coin, not more.
+      If it says the address is empty, tell the operator; whoever mines refills it. Then step 1.</p>
+      <p>If init says the voucher file already holds a key: with fund-agent 0.0.9 or newer the bootstrap coin goes into
+      that key, nothing to do. On 0.0.8, check <code>status</code> shows 0 sats, then add <code>--force</code>; never delete
+      the file by hand.</p></div>
+    <p>Without the bootstrap (another chain, or it is empty), <code>npx fund-agent@latest init</code> creates a key and prints an
+    address; the operator sends testnet coins there, and <code>npx fund-agent@latest status</code> shows them.</p>
 
     <h2>What the trail proves</h2>
     <p>Each mark spends the previous coin to an address derived from the commit hash, so the chain holds an ordered,
