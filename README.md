@@ -22,6 +22,9 @@ git mark init --chain tbtc4 --voucher txo:tbtc4:txid:vout?amount=X&key=Y
 # Or read vouchers from a file (uses last line, removes on success)
 git mark init --voucher ~/faucet/vouchers.txt
 
+# Or fund the key first (npx fund-agent, a faucet, any wallet) and init finds the coin
+git mark init --chain txbt4
+
 # Make commits, then mark them
 git commit -m "my change"
 git mark

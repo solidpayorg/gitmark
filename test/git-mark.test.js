@@ -6,7 +6,7 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes,
-  resolveVoucher, consumeVoucher, buildTransaction,
+  resolveVoucher, consumeVoucher, buildTransaction, findFunding,
   parseGithubRemote, explorerTxUrl, badgeMarkdown
 } from '../bin/git-mark.js';
 import { unifiedSighash, parseTransaction, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
@@ -471,5 +471,31 @@ describe('Badge', () => {
     assert.strictEqual(md,
       '[![gitmarks](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmelvincarvalho%2Fdelivery-day%2Fgh-pages%2Fblocktrails.json' +
       '&query=%24.states.length&label=gitmarks&suffix=%20%C2%B7%20txbt4&color=f7931a)](https://mempool.guide/testnet4/tx/ab)');
+  });
+});
+
+describe('Funding found at the base address', () => {
+  const addr = 'tb1ptz5u4k877prwwsu2n5xw04vx0636ajm7a90vvka823934x56hlfsaqrat4';
+  const rows = [
+    { txid: 'aa'.repeat(32), vout: 0, value: 10000, status: { confirmed: false } },
+    { txid: 'bb'.repeat(32), vout: 1, value: 4000, status: { confirmed: true } },
+    { txid: 'cc'.repeat(32), vout: 0, value: 6000, status: { confirmed: true } },
+  ];
+
+  it('asks the explorer for the address and picks the largest confirmed coin', async () => {
+    const seen = [];
+    const fetch = async (url) => { seen.push(url); return { ok: true, json: async () => rows }; };
+    const coin = await findFunding(addr, CHAINS.txbt4.explorer, { fetch });
+    assert.strictEqual(seen[0], `${CHAINS.txbt4.explorer}/address/${addr}/utxo`);
+    assert.deepStrictEqual(coin, { txid: 'cc'.repeat(32), vout: 0, amount: 6000, confirmed: true });
+  });
+
+  it('falls back to an unconfirmed coin, and to nothing', async () => {
+    const only = async () => ({ ok: true, json: async () => [rows[0]] });
+    assert.strictEqual((await findFunding(addr, CHAINS.txbt4.explorer, { fetch: only })).txid, 'aa'.repeat(32));
+    const none = async () => ({ ok: true, json: async () => [] });
+    assert.strictEqual(await findFunding(addr, CHAINS.txbt4.explorer, { fetch: none }), null);
+    const bad = async () => ({ ok: false, status: 500 });
+    await assert.rejects(findFunding(addr, CHAINS.txbt4.explorer, { fetch: bad }), /500/);
   });
 });

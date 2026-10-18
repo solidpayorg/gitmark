@@ -207,6 +207,18 @@ async function broadcastTx(rawHex, explorer) {
   return (await resp.text()).trim();
 }
 
+// The coin to start a trail from: whatever sits at the base address, however it got there
+// (fund-agent, a faucet, a wallet). Largest confirmed first, unconfirmed as a fallback.
+async function findFunding(address, explorer, { fetch: f = globalThis.fetch } = {}) {
+  const resp = await f(`${explorer}/address/${address}/utxo`, { headers: { accept: 'application/json' } });
+  if (!resp.ok) throw new Error(`Address lookup failed: ${resp.status}`);
+  const rows = await resp.json();
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  const coins = rows.map(r => ({ txid: r.txid, vout: r.vout, amount: Number(r.value), confirmed: !!(r.status && r.status.confirmed) }));
+  coins.sort((a, b) => (b.confirmed - a.confirmed) || (b.amount - a.amount));
+  return coins[0];
+}
+
 // --- Git helpers ---
 function gitExec(cmd) { return execSync(cmd, { encoding: 'utf8' }).trim(); }
 function getHead() {
@@ -385,27 +397,55 @@ async function cmdInit(args) {
     console.log(`Funded: ${outputAmount} sats (txid: ${newTxid})`);
   }
 
+  const address = pubkeyToAddress(pubkey, [], chain);
+
+  // No voucher: coins may already be at the base address (fund-agent, a faucet, a wallet)
+  if (voucherIdx === -1 && !loadPrivateState()) {
+    const found = await adoptFunding(address, chain, pubkey.slice(2), trail);
+    if (found) console.log(`Funded: ${found.amount} sats (txid: ${found.txid})`);
+  }
+
   saveTrail(trail);
 
   console.log(`Initialized gitmark trail: ${TRAIL_FILE}`);
   console.log(`Key source: ${keySource}`);
   console.log(`Base public key: ${pubkey}`);
   console.log(`Chain: ${chain}`);
-  console.log(`Address: ${pubkeyToAddress(pubkey, [], chain)}`);
+  console.log(`Address: ${address}`);
   if (!loadPrivateState() && voucherIdx === -1) {
     console.log(`\nUnfunded. Use: git mark init --voucher txo:${chain}:txid:vout?amount=X&key=Y`);
-    console.log(`Or send sats to: ${pubkeyToAddress(pubkey, [], chain)}`);
+    console.log(`Or send sats to: ${address}`);
   }
+}
+
+// Look the base address up on the chain's explorer; if a coin is there, make it the trail's funding
+async function adoptFunding(address, chain, xonly, trail) {
+  let found = null;
+  try { found = await findFunding(address, CHAINS[chain].explorer); } catch (e) { console.error(`Explorer lookup failed: ${e.message}`); }
+  if (!found) return null;
+  savePrivateState({ txid: found.txid, vout: found.vout, amount: found.amount }, chain);
+  if (trail && !trail['@id']) {
+    const reordered = { '@id': `txo:${chain}:${found.txid}:${found.vout}?amount=${found.amount}&pubkey=${xonly}`, '@type': trail['@type'] };
+    for (const [k, v] of Object.entries(trail)) { if (k !== '@type') reordered[k] = v; }
+    Object.keys(trail).forEach(k => delete trail[k]);
+    Object.assign(trail, reordered);
+  }
+  return found;
 }
 
 async function cmdMark(args) {
   const trail = loadFullTrail();
   if (!trail) { console.error(`No ${TRAIL_FILE} found. Run: git mark init`); process.exit(1); }
-  const priv = loadPrivateState();
-  if (!priv) { console.error('No funding. Run: git mark init --voucher txo:...'); process.exit(1); }
-
+  let priv = loadPrivateState();
   const privkey = getPrivkey();
   if (!privkey) { console.error('No private key. Set: git config nostr.privkey <hex>'); process.exit(1); }
+  if (!priv && trail.states.length === 0) {
+    // Initialised before the coins arrived: look at the base address now
+    const address = pubkeyToAddress(trail.pubkeyBase, [], trail.chain);
+    const found = await adoptFunding(address, trail.chain, trail.pubkeyBase.slice(2), trail);
+    if (found) { saveTrail(trail); priv = { txid: found.txid, vout: found.vout, amount: found.amount }; console.log(`Funded: ${found.amount} sats (txid: ${found.txid})`); }
+  }
+  if (!priv) { console.error(`No funding. Send sats to ${pubkeyToAddress(trail.pubkeyBase, [], trail.chain)} or run: git mark init --voucher txo:...`); process.exit(1); }
 
   const head = getHead();
   if (!head) { console.error('No commits yet. Make a commit first.'); process.exit(1); }
@@ -620,7 +660,7 @@ export {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, buildTransaction,
   TRAIL_FILE, PRIVATE_FILE, CHAINS, isDirty, loadTrailFromNotes, loadFullTrail,
-  resolveVoucher, consumeVoucher,
+  resolveVoucher, consumeVoucher, findFunding,
   parseGithubRemote, explorerTxUrl, badgeMarkdown
 };
 
