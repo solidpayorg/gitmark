@@ -10,7 +10,7 @@ import {
   parseGithubRemote, explorerTxUrl, badgeMarkdown
 } from '../bin/git-mark.js';
 import { unifiedSighash, parseTransaction, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
-import { buildAnnouncement, publish, parseRelays, remoteUrls, KIND_REPOSITORY } from '../lib/announce.js';
+import { buildAnnouncement, publish, parseRelays, remoteUrls, allRemoteUrls, KIND_REPOSITORY } from '../lib/announce.js';
 import { sha256 } from '@noble/hashes/sha256';
 import { schnorr } from '@noble/curves/secp256k1';
 import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'fs';
@@ -516,6 +516,20 @@ describe('Announce (NIP-34 kind 30617)', () => {
     assert.deepStrictEqual(remoteUrls('git@github.com:blocktrails/fund-agent.git'),
       { clone: ['https://github.com/blocktrails/fund-agent.git', 'git@github.com:blocktrails/fund-agent.git'], web: 'https://github.com/blocktrails/fund-agent' });
     assert.deepStrictEqual(remoteUrls(null), { clone: [], web: null });
+  });
+
+  it('lists every remote as a clone tag, origin first, and all web pages in one web tag', () => {
+    const remotes = ['git@github.com:o/demo.git', 'https://melvin.me/forge/' + 'ab'.repeat(32) + '/demo.git', 'https://github.com/o/demo.git'];
+    assert.deepStrictEqual(allRemoteUrls(remotes), {
+      clone: ['https://github.com/o/demo.git', 'git@github.com:o/demo.git', 'https://melvin.me/forge/' + 'ab'.repeat(32) + '/demo.git'],
+      web: ['https://github.com/o/demo', 'https://melvin.me/forge/' + 'ab'.repeat(32) + '/demo'],
+    });
+    const ev = buildAnnouncement({ privkey, repoName: 'demo', remotes, createdAt: 1760000000 });
+    assert.deepStrictEqual(ev.tags.filter((t) => t[0] === 'clone').map((t) => t[1]), allRemoteUrls(remotes).clone);
+    assert.deepStrictEqual(ev.tags.find((t) => t[0] === 'web'), ['web', 'https://github.com/o/demo', 'https://melvin.me/forge/' + 'ab'.repeat(32) + '/demo']);
+    assert.ok(schnorr.verify(ev.sig, ev.id, ev.pubkey));
+    const none = buildAnnouncement({ privkey, repoName: 'demo', createdAt: 1760000000 });
+    assert.ok(!none.tags.some((t) => t[0] === 'clone' || t[0] === 'web'), 'no remotes, no clone or web tags');
   });
 
   it('builds a signed event whose id and signature check out, with the mark in tags', () => {

@@ -530,11 +530,13 @@ async function announce(mark) {
   const relays = parseRelays(gitConfigOr('nostr.relays')) ;
   const list = relays.length ? relays : DEFAULT_RELAYS;
   const repoName = (gitTry('rev-parse --show-toplevel') || process.cwd()).split('/').pop();
-  const remoteUrl = gitTry('remote get-url origin');
+  // every remote, origin first: the mirrors this key vouches for
+  const names = (gitTry('remote') || '').split('\n').filter(Boolean).sort((a, b) => (a === 'origin' ? -1 : b === 'origin' ? 1 : a.localeCompare(b)));
+  const remotes = names.map((n) => gitTry(`remote get-url ${n}`)).filter(Boolean);
   const branch = gitTry('symbolic-ref --short HEAD');
   const refs = (gitTry('for-each-ref --format="%(refname) %(objectname)" refs/heads/') || '')
     .split('\n').map((l) => l.replace(/"/g, '').split(' ')).filter((p) => p.length === 2);
-  const event = buildAnnouncement({ privkey, repoName, remoteUrl, branch, refs, mark });
+  const event = buildAnnouncement({ privkey, repoName, remotes, branch, refs, mark });
   const results = await publishEvent(event, list);
   for (const r of results) console.log(`${r.ok ? '✓' : '✗'} ${r.relay}${r.message ? ` ${r.message}` : ''}`);
   console.log(`Announced: kind ${event.kind} ${event.id.slice(0, 16)}... (${results.filter((r) => r.ok).length}/${results.length} relays)`);
