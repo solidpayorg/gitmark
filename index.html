@@ -66,7 +66,7 @@
       <tr><th>When</th><th>Repo</th><th>Commit</th><th>Chain</th><th>Coin</th><th>Agent</th></tr>
       <tr><td colspan="6" class="muted" id="marks-empty">listening on the relays&hellip;</td></tr>
     </table>
-    <p class="marks-note">The last five <code>git mark announce</code> events seen on Nostr, each checked here in your browser.
+    <p class="marks-note">The last ten <code>git mark announce</code> events seen on Nostr, each checked here in your browser.
       <a href="https://play-grounds.github.io/gitmark/">All marks, as they land &rarr;</a></p>
 
     <h2>What It Does</h2>
@@ -181,7 +181,7 @@ git mark init --chain tbtc4 --voucher txo:tbtc4:txid:vout?amount=X&amp;key=Y</pr
 
   </div>
 <script type="module">
-// Latest marks: the last five NIP-34 announcements carrying a mark, read from
+// Latest marks: the last ten NIP-34 announcements carrying a mark, read from
 // the relays and verified here (id + schnorr) before they are shown.
 import { schnorr } from 'https://cdn.jsdelivr.net/npm/@noble/curves@1.4.0/secp256k1/+esm';
 import { sha256 } from 'https://cdn.jsdelivr.net/npm/@noble/hashes@1.4.0/sha256/+esm';
@@ -201,7 +201,7 @@ function verify(ev) {
 const marks = new Map();
 let settled = 0;
 function render() {
-  const list = [...marks.values()].sort((a, b) => b.created_at - a.created_at).slice(0, 5);
+  const list = [...marks.values()].sort((a, b) => b.created_at - a.created_at).slice(0, 10);
   const table = document.getElementById('marks');
   const empty = document.getElementById('marks-empty');
   if (!list.length) { if (settled >= RELAYS.length) empty.textContent = 'no marks reachable right now'; return; }
