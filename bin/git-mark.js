@@ -10,6 +10,10 @@
  *   git mark verify
  *   git mark update
  *   git mark badge [--branch name]
+ *   git mark announce              Publish the repo and its latest mark to Nostr (NIP-34)
+ *
+ * git mark --announce, or git config gitmark.announce true, announces after every mark.
+ * Relays: git config nostr.relays "wss://a,wss://b" (comma or space separated).
  */
 
 import { secp256k1, schnorr } from '@noble/curves/secp256k1';
@@ -21,6 +25,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 import { unifiedSighash, SIGHASH_ALL, SIGHASH_UNIFIED, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
+import { buildAnnouncement, publish as publishEvent, parseRelays, DEFAULT_RELAYS } from '../lib/announce.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
@@ -504,6 +509,40 @@ async function cmdMark(args) {
   console.log(`Address: ${address}`);
   console.log(`Balance: ${outputAmount} sats`);
   console.log(`TXO: txo:${chain}:${newTxid}:0?commit=${head}`);
+
+  if (args.includes('--announce') || gitConfigOr('gitmark.announce') === 'true') {
+    await announce({ chain, txo: `txo:${chain}:${newTxid}:0`, commit: head });
+  }
+}
+
+function gitConfigOr(key) { try { return gitExec(`git config ${key}`); } catch { return null; } }
+function gitTry(cmd) { try { return execSync(`git ${cmd}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; } }
+
+// Publish the repo and its latest mark as a NIP-34 announcement, signed with the trail key.
+// Relay trouble is reported and never fails the mark.
+async function announce(mark) {
+  const privkey = getPrivkey();
+  if (!privkey) { console.error('Announce: no private key in git config nostr.privkey'); return; }
+  const relays = parseRelays(gitConfigOr('nostr.relays')) ;
+  const list = relays.length ? relays : DEFAULT_RELAYS;
+  const repoName = (gitTry('rev-parse --show-toplevel') || process.cwd()).split('/').pop();
+  const remoteUrl = gitTry('remote get-url origin');
+  const branch = gitTry('symbolic-ref --short HEAD');
+  const refs = (gitTry('for-each-ref --format="%(refname) %(objectname)" refs/heads/') || '')
+    .split('\n').map((l) => l.replace(/"/g, '').split(' ')).filter((p) => p.length === 2);
+  const event = buildAnnouncement({ privkey, repoName, remoteUrl, branch, refs, mark });
+  const results = await publishEvent(event, list);
+  for (const r of results) console.log(`${r.ok ? '✓' : '✗'} ${r.relay}${r.message ? ` ${r.message}` : ''}`);
+  console.log(`Announced: kind ${event.kind} ${event.id.slice(0, 16)}... (${results.filter((r) => r.ok).length}/${results.length} relays)`);
+}
+
+async function cmdAnnounce() {
+  const trail = loadFullTrail();
+  if (!trail) { console.error(`No ${TRAIL_FILE} found. Run: git mark init`); process.exit(1); }
+  const last = trail.txo[trail.txo.length - 1];
+  const mark = last ? { chain: trail.chain, txo: last.split('?')[0], commit: trail.states[trail.states.length - 1] } : null;
+  if (!mark) console.log('No marks yet; announcing the repo only.');
+  await announce(mark);
 }
 
 async function cmdInfo() {
@@ -680,6 +719,8 @@ if (isMain) {
     cmdVerify();
   } else if (cmd === 'update') {
     cmdUpdate();
+  } else if (cmd === 'announce') {
+    cmdAnnounce();
   } else if (cmd === 'badge') {
     cmdBadge(args.slice(1));
   } else if (cmd === 'mark' || !cmd || (cmd && !cmd.startsWith('-'))) {
@@ -691,6 +732,7 @@ if (isMain) {
       console.log('  git mark verify           # verify trail against Bitcoin');
       console.log('  git mark update           # update blocktrails.json from git notes');
       console.log('  git mark badge            # print README badge markdown');
+    console.log('  git mark announce         # publish repo + latest mark to Nostr (NIP-34)');
     } else {
       cmdMark(args.slice(cmd === 'mark' ? 1 : 0));
     }
@@ -701,5 +743,6 @@ if (isMain) {
     console.log('  git mark info             # show trail state');
     console.log('  git mark verify           # verify trail against Bitcoin');
     console.log('  git mark badge            # print README badge markdown');
+    console.log('  git mark announce         # publish repo + latest mark to Nostr (NIP-34)');
   }
 }

@@ -72,7 +72,23 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 | `git mark verify` | Verify all marks against Bitcoin |
 | `git mark update` | Update blocktrails.json from git notes |
 | `git mark badge` | Print README badge markdown. Option: `--branch` |
+| `git mark announce` | Publish the repo and its latest mark to Nostr (NIP-34 kind 30617) |
 | `git mark --version` | Show version |
+
+## Announce
+
+`git mark announce` publishes a NIP-34 repository announcement (kind 30617) signed with the trail key, so the
+Nostr identity, the coin and the commit are one key. Besides the usual `d`, `name`, `clone`, `web` and branch
+tags it carries the latest mark: `chain`, `txo` and `commit`. Relays come from git config, the convention
+[git-nostr-hook](https://github.com/nostrapps/git-nostr-hook) uses:
+
+```bash
+git config nostr.relays "wss://relay.damus.io,wss://nos.lol"   # comma or space separated; defaults if unset
+git mark --announce                                            # announce after this mark
+git config gitmark.announce true                               # announce after every mark
+```
+
+A relay that refuses or times out is reported and never fails the mark.
 
 ## Badge
 

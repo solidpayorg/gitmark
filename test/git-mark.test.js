@@ -10,6 +10,8 @@ import {
   parseGithubRemote, explorerTxUrl, badgeMarkdown
 } from '../bin/git-mark.js';
 import { unifiedSighash, parseTransaction, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
+import { buildAnnouncement, publish, parseRelays, remoteUrls, KIND_REPOSITORY } from '../lib/announce.js';
+import { sha256 } from '@noble/hashes/sha256';
 import { schnorr } from '@noble/curves/secp256k1';
 import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'fs';
 import { join } from 'path';
@@ -497,5 +499,55 @@ describe('Funding found at the base address', () => {
     assert.strictEqual(await findFunding(addr, CHAINS.txbt4.explorer, { fetch: none }), null);
     const bad = async () => ({ ok: false, status: 500 });
     await assert.rejects(findFunding(addr, CHAINS.txbt4.explorer, { fetch: bad }), /500/);
+  });
+});
+
+describe('Announce (NIP-34 kind 30617)', () => {
+  const privkey = '00'.repeat(31) + '01';
+  const mark = { chain: 'txbt4', txo: 'txo:txbt4:' + 'ab'.repeat(32) + ':0', commit: 'de04775b6ade67b91caf15013ba73dad5f1b4b67' };
+
+  it('parses relays from a comma or space separated config value, wss only', () => {
+    assert.deepStrictEqual(parseRelays('wss://a.example, wss://b.example https://nope'), ['wss://a.example', 'wss://b.example']);
+    assert.deepStrictEqual(parseRelays(null), []);
+  });
+
+  it('turns an ssh remote into https clone and web urls', () => {
+    assert.deepStrictEqual(remoteUrls('git@github.com:blocktrails/fund-agent.git'),
+      { clone: ['https://github.com/blocktrails/fund-agent.git', 'git@github.com:blocktrails/fund-agent.git'], web: 'https://github.com/blocktrails/fund-agent' });
+    assert.deepStrictEqual(remoteUrls(null), { clone: [], web: null });
+  });
+
+  it('builds a signed event whose id and signature check out, with the mark in tags', () => {
+    const ev = buildAnnouncement({ privkey, repoName: 'demo', remoteUrl: 'https://github.com/o/demo.git', branch: 'main', refs: [['refs/heads/main', 'ff'.repeat(20)]], mark, createdAt: 1760000000 });
+    assert.strictEqual(ev.kind, KIND_REPOSITORY);
+    assert.strictEqual(ev.pubkey, bytesToHex(schnorr.getPublicKey(hexToBytes(privkey))));
+    const serialized = JSON.stringify([0, ev.pubkey, ev.created_at, ev.kind, ev.tags, ev.content]);
+    assert.strictEqual(ev.id, bytesToHex(sha256(new TextEncoder().encode(serialized))));
+    assert.ok(schnorr.verify(ev.sig, ev.id, ev.pubkey));
+    const tag = (n) => ev.tags.find((t) => t[0] === n);
+    assert.deepStrictEqual(tag('d'), ['d', 'demo']);
+    assert.deepStrictEqual(tag('web'), ['web', 'https://github.com/o/demo']);
+    assert.deepStrictEqual(tag('HEAD'), ['HEAD', 'ref: refs/heads/main']);
+    assert.deepStrictEqual(tag('chain'), ['chain', 'txbt4']);
+    assert.deepStrictEqual(tag('txo'), ['txo', mark.txo]);
+    assert.deepStrictEqual(tag('commit'), ['commit', mark.commit]);
+    assert.match(ev.content, /de04775b anchored on txbt4/);
+  });
+
+  it('publishes to each relay and reports its OK, timeout or refusal', async () => {
+    const ev = buildAnnouncement({ privkey, repoName: 'demo', createdAt: 1760000000 });
+    const sent = [];
+    class FakeWS {
+      constructor(url) { this.url = url; sent.push(url); setTimeout(() => this.onopen && this.onopen(), 0); }
+      send(data) {
+        const msg = JSON.parse(data); assert.strictEqual(msg[0], 'EVENT'); assert.strictEqual(msg[1].id, ev.id);
+        if (this.url.includes('ok')) setTimeout(() => this.onmessage({ data: JSON.stringify(['OK', ev.id, true, '']) }), 0);
+        else if (this.url.includes('no')) setTimeout(() => this.onmessage({ data: JSON.stringify(['OK', ev.id, false, 'blocked: no']) }), 0);
+      }
+      close() {}
+    }
+    const r = await publish(ev, ['wss://ok.example', 'wss://no.example', 'wss://silent.example'], { WebSocket: FakeWS, timeout: 50 });
+    assert.deepStrictEqual(sent, ['wss://ok.example', 'wss://no.example', 'wss://silent.example']);
+    assert.deepStrictEqual(r.map((x) => [x.ok, x.message]), [[true, ''], [false, 'blocked: no'], [false, 'timeout']]);
   });
 });
