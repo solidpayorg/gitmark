@@ -6,7 +6,7 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils';
 import {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, CHAINS, isDirty, loadFullTrail, loadTrailFromNotes,
-  resolveVoucher, consumeVoucher, buildTransaction, findFunding,
+  resolveVoucher, consumeVoucher, buildTransaction, findFunding, addressToScript,
   parseGithubRemote, explorerTxUrl, badgeMarkdown
 } from '../bin/git-mark.js';
 import { unifiedSighash, parseTransaction, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
@@ -412,6 +412,28 @@ describe('Unified sighash (Knots vectors)', () => {
   });
 });
 
+describe('Address to scriptPubKey', () => {
+  it('decodes a taproot address back to the key it was made from', () => {
+    const pub = bytesToHex(secp256k1.getPublicKey(hexToBytes('11'.repeat(32)), true));
+    const addr = pubkeyToAddress(pub, ['abc123'], 'txbt4');
+    const xonly = deriveChainedPubkey(hexToBytes(pub), ['abc123']).slice(1);
+    assert.deepStrictEqual(addressToScript(addr, 'txbt4'), p2trScript(xonly));
+  });
+
+  it('decodes BIP173 v0 test vectors', () => {
+    assert.strictEqual(bytesToHex(addressToScript('tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7', 'tbtc4')),
+      '00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262');
+    assert.strictEqual(bytesToHex(addressToScript('BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4', 'btc')),
+      '0014751e76e8199196d454941c45d1b3a323f1433bd6');
+  });
+
+  it('rejects another chain, a bad checksum and a v1 address with a bech32 checksum', () => {
+    assert.throws(() => addressToScript('tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7', 'btc'), /not for btc/);
+    assert.throws(() => addressToScript('tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k8', 'tbtc4'), /checksum/);
+    assert.throws(() => addressToScript('tb1pw508d6qejxtdg4y5r3zarqfsj6c3', 'tbtc4'), /checksum|Invalid/);
+  });
+});
+
 describe('Signing', () => {
   const key = hexToBytes('11'.repeat(32));
   const xonly = secp256k1.getPublicKey(key, true).slice(1);
@@ -601,6 +623,31 @@ describe('CLI guards', () => {
     assert.strictEqual(r.status, 1);
     assert.match(r.stderr, /already the last mark/);
     assert.match(r.stderr, /--force/);
+    rmSync(dir, { recursive: true });
+  });
+
+  it('exodus needs an address', () => {
+    const { dir, env, head, run } = repo();
+    const pub = bytesToHex(secp256k1.getPublicKey(hexToBytes('11'.repeat(32)), true));
+    writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [head], txo: [] }));
+    const r = run('exodus');
+    assert.strictEqual(r.status, 1);
+    assert.match(r.stderr, /Usage: git mark exodus <address>/);
+    rmSync(dir, { recursive: true });
+  });
+
+  it('a closed trail neither marks nor exoduses again', () => {
+    const { dir, env, head, run } = repo();
+    execFileSync('git', ['config', '--local', 'nostr.privkey', '11'.repeat(32)], { cwd: dir, env });
+    execFileSync('git', ['config', '--local', 'gitmark.exodus', `txo:txbt4:${'cd'.repeat(32)}:0?amount=9400`], { cwd: dir, env });
+    const pub = bytesToHex(secp256k1.getPublicKey(hexToBytes('11'.repeat(32)), true));
+    writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [], txo: [] }));
+    const m = run();
+    assert.strictEqual(m.status, 1);
+    assert.match(m.stderr, /Trail is closed/);
+    const e = run('exodus', pubkeyToAddress(pub, [], 'txbt4'));
+    assert.strictEqual(e.status, 1);
+    assert.match(e.stderr, /already closed/);
     rmSync(dir, { recursive: true });
   });
 });
