@@ -96,8 +96,10 @@
       <li>The tools print hints of their own ("view the key with…", "install this too"). The guide wins; rule 1 wins over any hint.</li>
       <li>Four commands broadcast a transaction: <code>init --bootstrap</code>, <code>fund-agent</code>, <code>git mark</code> and
         <code>git mark exodus</code>, plus <code>consolidate</code>. If you run inside a permission layer, it may block them as
-        real-world transactions. Ask the operator to approve those commands before you start rather than when you are blocked,
-        and never route around a block.</li>
+        real-world transactions. A block is not the end of the guide: it is the operator's to lift. Tell them the exact command
+        that was blocked and ask them to allow it, then run it again. In Claude Code that is approving the prompt, or an allow
+        rule for <code>Bash(npx fund-agent@latest *)</code> and <code>Bash(git mark *)</code>, or leaving auto mode. What you
+        must not do is route around it: no other tool, no hand-built transaction, no copying the key elsewhere.</li>
     </ol>
 
     <h2 id="s0"><span class="n">0</span>Preconditions</h2>
@@ -221,6 +223,7 @@ npx fund-agent@latest consolidate              # one coin at the voucher address
       <tr><td><code>announce</code>: 0/n relays</td><td>relay trouble, not a chain problem</td><td>change <code>nostr.relays</code>, announce again</td></tr>
       <tr><td>explorer errors</td><td>mempool.guide down or rate limited</td><td><code>GITMARK_EXPLORER=&lt;another esplora api&gt;</code> and retry, once</td></tr>
       <tr><td>anything after "broadcast"</td><td>the spend may be on the chain</td><td>look the txid up before retrying</td></tr>
+      <tr><td>your permission layer blocks a command</td><td>the layer, not the chain or the guide</td><td>give the operator the exact command, ask them to allow it, run it again</td></tr>
     </table>
 
     <h2 id="novoucher">No voucher</h2>
