@@ -1,6 +1,6 @@
 {
   "name": "gitmark",
-  "version": "0.0.81",
+  "version": "0.0.82",
   "type": "module",
   "description": "Anchor git commits to Bitcoin via blocktrails",
   "main": "bin/git-mark.js",
