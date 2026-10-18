@@ -37,6 +37,11 @@
     .callout { background: #fff8f0; border: 1px solid #f7931a33; border-radius: 4px; padding: 1.25rem; margin: 1.5rem 0; }
     .callout .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #f7931a; margin-bottom: 0.5rem; }
     footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #ddd; color: #999; font-size: 0.85rem; }
+    .marks { margin: 0 0 0.5rem; }
+    .marks td, .marks th { white-space: nowrap; }
+    .marks .mono { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.82rem; }
+    .marks .muted { color: #999; }
+    .marks-note { color: #999; font-size: 0.85rem; margin-bottom: 1.25rem; }
     footer a { color: #888; }
   </style>
 </head>
@@ -48,8 +53,18 @@
     <div class="meta">
       <a href="https://github.com/solidpayorg/gitmark">GitHub</a> &middot;
       <a href="https://www.npmjs.com/package/gitmark">npm</a> &middot;
-      <a href="https://blocktrails.org">blocktrails.org</a>
+      <a href="https://blocktrails.org">blocktrails.org</a> &middot;
+      <a href="https://play-grounds.github.io/gitmark/">console</a>
     </div>
+
+    <h2>Latest marks</h2>
+
+    <table class="marks" id="marks">
+      <tr><th>When</th><th>Repo</th><th>Commit</th><th>Chain</th><th>Coin</th><th>Agent</th></tr>
+      <tr><td colspan="6" class="muted" id="marks-empty">listening on the relays&hellip;</td></tr>
+    </table>
+    <p class="marks-note">The last five <code>git mark announce</code> events seen on Nostr, each checked here in your browser.
+      <a href="https://play-grounds.github.io/gitmark/">All marks, as they land &rarr;</a></p>
 
     <h2>What It Does</h2>
 
@@ -65,21 +80,26 @@
 
     <h2>Quick Start</h2>
 
-<pre># Initialize in a git repo
-git mark init --chain tbtc4 --voucher txo:tbtc4:txid:vout?amount=X&amp;key=Y
+<pre># A key for the repo and a coin for the key
+npm init agent
+npx fund-agent
 
-# Or read vouchers from a file (last line used, removed on success)
-git mark init --voucher ~/faucet/vouchers.txt
+# The trail: init finds the coin at the key's address
+git mark init --chain txbt4
 
-# Make commits, then mark them
+# Make commits, then mark them (300 sats each)
 git commit -m "my change"
 git mark
 
-# Verify the trail
-git mark verify
+# Tell the world: NIP-34 announcement with the mark
+git mark announce
 
-# Show trail state
-git mark info</pre>
+# Verify the trail, show its state
+git mark verify
+git mark info
+
+# Or fund from a voucher string instead
+git mark init --chain tbtc4 --voucher txo:tbtc4:txid:vout?amount=X&amp;key=Y</pre>
 
     <h2>How It Works</h2>
 
@@ -129,16 +149,20 @@ git mark info</pre>
     <table>
       <tr><th>Command</th><th>Description</th></tr>
       <tr><td><code>git mark init</code></td><td>Initialize trail. Options: <code>--chain</code>, <code>--voucher</code>, <code>--force</code></td></tr>
-      <tr><td><code>git mark</code></td><td>Anchor HEAD commit to Bitcoin</td></tr>
+      <tr><td><code>git mark</code></td><td>Anchor HEAD commit to Bitcoin. Options: <code>--announce</code>, <code>--force</code></td></tr>
+      <tr><td><code>git mark announce</code></td><td>Publish the repo and its latest mark to Nostr (NIP-34)</td></tr>
       <tr><td><code>git mark info</code></td><td>Show trail state, balance, addresses</td></tr>
       <tr><td><code>git mark verify</code></td><td>Verify all marks against Bitcoin</td></tr>
       <tr><td><code>git mark update</code></td><td>Update blocktrails.json from git notes</td></tr>
+      <tr><td><code>git mark badge</code></td><td>Print README badge markdown</td></tr>
       <tr><td><code>git mark --version</code></td><td>Show version</td></tr>
     </table>
 
     <h2>Related</h2>
 
     <p>
+      <a href="https://play-grounds.github.io/gitmark/">gitmark console</a> &mdash; marks, as they land<br>
+      <a href="https://www.npmjs.com/package/fund-agent">fund-agent</a> &mdash; one line to fund a repo's key<br>
       <a href="https://blocktrails.org">Blocktrails</a> &mdash; state anchoring on Bitcoin<br>
       <a href="https://github.com/nicepkg/gitmark-test">gitmark-test</a> &mdash; interim implementation<br>
       <a href="https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki">BIP-341</a> &mdash; Taproot key tweaking
@@ -149,5 +173,61 @@ git mark info</pre>
     </footer>
 
   </div>
+<script type="module">
+// Latest marks: the last five NIP-34 announcements carrying a mark, read from
+// the relays and verified here (id + schnorr) before they are shown.
+import { schnorr } from 'https://cdn.jsdelivr.net/npm/@noble/curves@1.4.0/secp256k1/+esm';
+import { sha256 } from 'https://cdn.jsdelivr.net/npm/@noble/hashes@1.4.0/sha256/+esm';
+const RELAYS = ['wss://nostr.oxtr.dev', 'wss://relay.primal.net', 'wss://relay.snort.social', 'wss://relay.damus.io'];
+const EXPLORER = { txbt4: 'https://mempool.guide/testnet4', xbt: 'https://mempool.kilombino.com', tbtc4: 'https://mempool.space/testnet4', tbtc3: 'https://mempool.space/testnet', btc: 'https://mempool.space', signet: 'https://mempool.space/signet' };
+const hex = (b) => Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const tag = (ev, n) => (ev.tags.find((t) => t[0] === n) || [])[1];
+const ago = (ts) => { const s = Math.max(0, Math.floor(Date.now() / 1000 - ts)); return s < 60 ? `${s}s ago` : s < 3600 ? `${Math.floor(s / 60)}m ago` : s < 86400 ? `${Math.floor(s / 3600)}h ago` : `${Math.floor(s / 86400)}d ago`; };
+function verify(ev) {
+  try {
+    if (ev.kind !== 30617 || !/^[0-9a-f]{64}$/.test(ev.pubkey)) return false;
+    const ser = JSON.stringify([0, ev.pubkey, ev.created_at, ev.kind, ev.tags, ev.content]);
+    return hex(sha256(new TextEncoder().encode(ser))) === ev.id && schnorr.verify(ev.sig, ev.id, ev.pubkey);
+  } catch { return false; }
+}
+const marks = new Map();
+let settled = 0;
+function render() {
+  const list = [...marks.values()].sort((a, b) => b.created_at - a.created_at).slice(0, 5);
+  const table = document.getElementById('marks');
+  const empty = document.getElementById('marks-empty');
+  if (!list.length) { if (settled >= RELAYS.length) empty.textContent = 'no marks reachable right now'; return; }
+  for (const r of [...table.querySelectorAll('tr.mark')]) r.remove();
+  empty.parentElement.style.display = 'none';
+  for (const ev of list) {
+    const chain = tag(ev, 'chain'), m = String(tag(ev, 'txo') || '').match(/^txo:[a-z0-9]+:([0-9a-f]{64}):(\d+)/i), commit = tag(ev, 'commit') || '', web = tag(ev, 'web');
+    const name = tag(ev, 'name') || tag(ev, 'd') || '?';
+    const tr = document.createElement('tr'); tr.className = 'mark';
+    tr.innerHTML = `<td class="muted" title="${new Date(ev.created_at * 1000).toLocaleString()}">${ago(ev.created_at)}</td>
+      <td>${web ? `<a href="${esc(web)}">${esc(name)}</a>` : esc(name)}</td>
+      <td class="mono">${esc(commit.slice(0, 8))}</td>
+      <td class="mono">${esc(chain)}</td>
+      <td class="mono">${m ? (EXPLORER[chain] ? `<a href="${EXPLORER[chain]}/tx/${m[1]}">${m[1].slice(0, 8)}…:${m[2]}</a>` : `${m[1].slice(0, 8)}…:${m[2]}`) : '—'}</td>
+      <td class="mono"><a href="https://nostr.social/${ev.pubkey}" title="did:nostr:${ev.pubkey}">did:nostr:${ev.pubkey.slice(0, 8)}…</a></td>`;
+    table.appendChild(tr);
+  }
+}
+for (const url of RELAYS) {
+  let ws; try { ws = new WebSocket(url); } catch { settled++; render(); continue; }
+  const sub = 'gm' + Math.random().toString(36).slice(2, 8);
+  ws.onopen = () => ws.send(JSON.stringify(['REQ', sub, { kinds: [30617], limit: 200 }]));
+  ws.onmessage = (m) => {
+    let msg; try { msg = JSON.parse(m.data); } catch { return; }
+    if (msg[0] === 'EVENT' && msg[1] === sub) {
+      const ev = msg[2]; if (!tag(ev, 'chain') || !tag(ev, 'txo') || !verify(ev)) return;
+      const key = ev.pubkey + ':' + (tag(ev, 'd') || ''); const cur = marks.get(key);
+      if (!cur || cur.created_at < ev.created_at) marks.set(key, ev);
+      render();
+    } else if (msg[0] === 'EOSE') { settled++; render(); try { ws.close(); } catch {} }
+  };
+  ws.onerror = () => { settled++; render(); };
+}
+</script>
 </body>
 </html>
