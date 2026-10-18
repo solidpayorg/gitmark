@@ -14,6 +14,7 @@ import { buildAnnouncement, publish, parseRelays, remoteUrls, KIND_REPOSITORY } 
 import { sha256 } from '@noble/hashes/sha256';
 import { schnorr } from '@noble/curves/secp256k1';
 import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'fs';
+import cp from 'child_process';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
@@ -549,5 +550,43 @@ describe('Announce (NIP-34 kind 30617)', () => {
     const r = await publish(ev, ['wss://ok.example', 'wss://no.example', 'wss://silent.example'], { WebSocket: FakeWS, timeout: 50 });
     assert.deepStrictEqual(sent, ['wss://ok.example', 'wss://no.example', 'wss://silent.example']);
     assert.deepStrictEqual(r.map((x) => [x.ok, x.message]), [[true, ''], [false, 'blocked: no'], [false, 'timeout']]);
+  });
+});
+
+describe('CLI guards', () => {
+  const bin = new URL('../bin/git-mark.js', import.meta.url).pathname;
+  const { spawnSync, execFileSync } = cp;
+
+  function repo() {
+    const dir = mkdtempSync(join(tmpdir(), 'gitmark-'));
+    const env = { ...process.env, GIT_CONFIG_GLOBAL: join(dir, 'no-global'), GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' };
+    execFileSync('git', ['init', '-q'], { cwd: dir, env });
+    writeFileSync(join(dir, 'a'), 'a');
+    execFileSync('git', ['add', 'a'], { cwd: dir, env });
+    execFileSync('git', ['commit', '-qm', 'first'], { cwd: dir, env });
+    const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dir, env, encoding: 'utf8' }).trim();
+    return { dir, env, head, run: (...a) => spawnSync(process.execPath, [bin, ...a], { cwd: dir, env, encoding: 'utf8' }) };
+  }
+
+  it('an unknown word prints usage and exits 1 instead of marking', () => {
+    const { dir, run } = repo();
+    const r = run('anounce');
+    assert.strictEqual(r.status, 1);
+    assert.match(r.stderr, /Unknown command: anounce/);
+    assert.match(r.stderr, /git mark announce/);
+    rmSync(dir, { recursive: true });
+  });
+
+  it('refuses to mark a commit that is already the last mark unless --force', () => {
+    const { dir, env, head, run } = repo();
+    execFileSync('git', ['config', '--local', 'nostr.privkey', '11'.repeat(32)], { cwd: dir, env });
+    execFileSync('git', ['config', '--local', 'gitmark.txo', `txo:txbt4:${'ab'.repeat(32)}:0?amount=9700&commit=${head}`], { cwd: dir, env });
+    const pub = bytesToHex(secp256k1.getPublicKey(hexToBytes('11'.repeat(32)), true));
+    writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [head], txo: [`txo:txbt4:${'ab'.repeat(32)}:0?amount=9700&commit=${head}`] }));
+    const r = run();
+    assert.strictEqual(r.status, 1);
+    assert.match(r.stderr, /already the last mark/);
+    assert.match(r.stderr, /--force/);
+    rmSync(dir, { recursive: true });
   });
 });

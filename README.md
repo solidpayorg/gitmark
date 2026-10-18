@@ -67,7 +67,7 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 | Command | Description |
 |---------|-------------|
 | `git mark init` | Initialize trail. Options: `--chain`, `--voucher`, `--force` |
-| `git mark` | Anchor HEAD commit to Bitcoin |
+| `git mark` | Anchor HEAD commit to Bitcoin. Options: `--announce`, `--force` (mark a commit that is already the last mark) |
 | `git mark info` | Show trail state, balance, addresses |
 | `git mark verify` | Verify all marks against Bitcoin |
 | `git mark update` | Update blocktrails.json from git notes |

@@ -5,7 +5,7 @@
  *
  * Usage:
  *   git mark init [--chain tbtc4] [--voucher txo:...]
- *   git mark [--chain tbtc4]
+ *   git mark [--announce] [--force]   Anchor HEAD; --force marks a commit that is already the last mark
  *   git mark info
  *   git mark verify
  *   git mark update
@@ -454,6 +454,10 @@ async function cmdMark(args) {
 
   const head = getHead();
   if (!head) { console.error('No commits yet. Make a commit first.'); process.exit(1); }
+  if (trail.states.length && trail.states[trail.states.length - 1] === head && !args.includes('--force')) {
+    console.error(`HEAD ${head.slice(0, 8)} is already the last mark. Commit something new, or --force to mark it again.`);
+    process.exit(1);
+  }
   const chain = trail.chain;
   const explorer = CHAINS[chain]?.explorer;
   if (!explorer) { console.error(`Unknown chain: ${chain}`); process.exit(1); }
@@ -704,6 +708,15 @@ export {
 };
 
 // --- CLI ---
+const USAGE = `Usage:
+  git mark init [--chain tbtc4] [--voucher txo:...]
+  git mark [--announce] [--force]   # anchor HEAD to Bitcoin
+  git mark info                     # show trail state
+  git mark verify                   # verify trail against Bitcoin
+  git mark update                   # update blocktrails.json from git notes
+  git mark badge                    # print README badge markdown
+  git mark announce                 # publish repo + latest mark to Nostr (NIP-34)`;
+
 const isMain = process.argv[1]?.endsWith('git-mark.js') || process.argv[1]?.endsWith('git-mark');
 if (isMain) {
   const args = process.argv.slice(2);
@@ -711,6 +724,8 @@ if (isMain) {
 
   if (cmd === '--version' || cmd === '-v') {
     console.log(PKG.version);
+  } else if (cmd === '--help' || cmd === '-h') {
+    console.log(USAGE);
   } else if (cmd === 'init') {
     cmdInit(args.slice(1));
   } else if (cmd === 'info') {
@@ -723,26 +738,16 @@ if (isMain) {
     cmdAnnounce();
   } else if (cmd === 'badge') {
     cmdBadge(args.slice(1));
-  } else if (cmd === 'mark' || !cmd || (cmd && !cmd.startsWith('-'))) {
-    if (!existsSync(TRAIL_FILE) && cmd !== 'mark') {
-      console.log('Usage:');
-      console.log('  git mark init [--chain tbtc4] [--voucher txo:...]');
-      console.log('  git mark                  # anchor HEAD to Bitcoin');
-      console.log('  git mark info             # show trail state');
-      console.log('  git mark verify           # verify trail against Bitcoin');
-      console.log('  git mark update           # update blocktrails.json from git notes');
-      console.log('  git mark badge            # print README badge markdown');
-    console.log('  git mark announce         # publish repo + latest mark to Nostr (NIP-34)');
+  } else if (cmd === 'mark' || !cmd || cmd.startsWith('-')) {
+    // only a bare `git mark`, `git mark mark` or flags anchor HEAD; a word we do not know never spends
+    if (!existsSync(TRAIL_FILE)) {
+      console.log(USAGE);
     } else {
       cmdMark(args.slice(cmd === 'mark' ? 1 : 0));
     }
   } else {
-    console.log('Usage:');
-    console.log('  git mark init [--chain tbtc4] [--voucher txo:...]');
-    console.log('  git mark                  # anchor HEAD to Bitcoin');
-    console.log('  git mark info             # show trail state');
-    console.log('  git mark verify           # verify trail against Bitcoin');
-    console.log('  git mark badge            # print README badge markdown');
-    console.log('  git mark announce         # publish repo + latest mark to Nostr (NIP-34)');
+    console.error(`Unknown command: ${cmd}\n`);
+    console.error(USAGE);
+    process.exit(1);
   }
 }
