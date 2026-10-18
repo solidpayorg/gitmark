@@ -11,7 +11,7 @@
  *   git mark update
  *   git mark badge [--branch name]
  *   git mark announce              Publish the repo and its latest mark to Nostr (NIP-34)
- *   git mark exodus <address> [--dry]   Close the trail: send its coin to an address
+ *   git mark exodus <address> [--dry]   Close the trail: send its coin to an address (--dry-run works too)
  *
  * git mark --announce, or git config gitmark.announce true, announces after every mark.
  * Relays: git config nostr.relays "wss://a,wss://b" (comma or space separated).
@@ -592,7 +592,7 @@ async function cmdExodus(args) {
   console.log(`Spend: txo:${chain}:${priv.txid}:${priv.vout} (${priv.amount} sats)`);
   console.log(`To:    ${dest}`);
   console.log(`Send:  ${outputAmount} sats (fee ${fee})`);
-  if (args.includes('--dry')) {
+  if (args.includes('--dry') || args.includes('--dry-run')) {
     console.log(`Raw:   ${rawTx}`);
     console.log('\nDry run: nothing broadcast.');
     return;
