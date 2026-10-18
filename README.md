@@ -73,6 +73,7 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 | `git mark update` | Update blocktrails.json from git notes |
 | `git mark badge` | Print README badge markdown. Option: `--branch` |
 | `git mark announce` | Publish the repo and its latest mark to Nostr (NIP-34 kind 30617) |
+| `git mark exodus <address>` | Close the trail: send its coin to an address, no trail output left. Option: `--dry` (print the transaction, broadcast nothing) |
 | `git mark --version` | Show version |
 
 ## Announce
@@ -134,6 +135,8 @@ git config --local gitmark.txo txo:tbtc4:txid:vout?amount=X&commit=Y
 # Dirty flag — set to false to keep working tree clean after marking
 git config --local gitmark.dirty false
 ```
+
+Every command that reads the chain uses the chain's explorer API (see Chains). `GITMARK_EXPLORER=http://127.0.0.1:3491/api` points them all at another esplora-style API, such as a local explorer.
 
 When `gitmark.dirty=false`, `git mark` only writes git notes + git config. Run `git mark update` to sync blocktrails.json when ready.
 

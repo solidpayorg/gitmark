@@ -11,6 +11,7 @@
  *   git mark update
  *   git mark badge [--branch name]
  *   git mark announce              Publish the repo and its latest mark to Nostr (NIP-34)
+ *   git mark exodus <address> [--dry]   Close the trail: send its coin to an address
  *
  * git mark --announce, or git config gitmark.announce true, announces after every mark.
  * Relays: git config nostr.relays "wss://a,wss://b" (comma or space separated).
@@ -46,6 +47,10 @@ const CHAINS = {
   xbt:    { explorer: 'https://mempool.kilombino.com/api', name: 'Bitcoin BLAKE2b', hrp: 'bc', unified: true },
   txbt4:  { explorer: 'https://mempool.guide/testnet4/api', name: 'Bitcoin BLAKE2b Testnet4', hrp: 'tb', unified: true },
 };
+
+// The explorer API for a chain. GITMARK_EXPLORER points every command at another esplora-style API,
+// for a local explorer or a test stub.
+function explorerFor(chain) { return process.env.GITMARK_EXPLORER || CHAINS[chain]?.explorer; }
 
 // --- Blocktrails key chaining (BIP-341) ---
 function taggedHash(tag, ...msgs) {
@@ -110,6 +115,24 @@ function bech32mEncode(hrp, version, program) {
   let result = hrp + '1';
   for (const v of [...values, ...checksum]) result += BECH32_CHARSET[v];
   return result;
+}
+
+// A segwit address (bech32 v0, bech32m v1+) to its scriptPubKey; throws on a bad checksum or another chain's hrp
+function addressToScript(address, chain) {
+  const addr = address.toLowerCase();
+  const sep = addr.lastIndexOf('1');
+  const hrp = addr.slice(0, sep);
+  const want = CHAINS[chain]?.hrp ?? 'tb';
+  if (hrp !== want) throw new Error(`Address is not for ${chain} (expected ${want}1...)`);
+  const data = [...addr.slice(sep + 1)].map(c => BECH32_CHARSET.indexOf(c));
+  if (data.length < 7 || data.includes(-1)) throw new Error('Invalid address');
+  const version = data[0];
+  if (polymod([...hrpExpand(hrp), ...data]) !== (version === 0 ? 1 : 0x2bc830a3)) throw new Error('Invalid address checksum');
+  const words = data.slice(1, -6);
+  const program = convertBits(words, 5, 8).slice(0, Math.floor(words.length * 5 / 8));
+  if (version > 16 || program.length < 2 || program.length > 40) throw new Error('Invalid address');
+  if (version === 0 && program.length !== 20 && program.length !== 32) throw new Error('Invalid address');
+  return new Uint8Array([version === 0 ? 0 : 0x50 + version, program.length, ...program]);
 }
 
 function pubkeyToAddress(pubkeyHex, states, chain) {
@@ -372,7 +395,7 @@ async function cmdInit(args) {
     const baseScript = p2trScript(baseXonly);
 
     // Fetch voucher scriptPubKey
-    const explorer = CHAINS[chain].explorer;
+    const explorer = explorerFor(chain);
     const txResp = await fetch(`${explorer}/tx/${txo.txid}`);
     if (!txResp.ok) { console.error('Could not fetch voucher transaction'); process.exit(1); }
     const txData = await txResp.json();
@@ -426,7 +449,7 @@ async function cmdInit(args) {
 // Look the base address up on the chain's explorer; if a coin is there, make it the trail's funding
 async function adoptFunding(address, chain, xonly, trail) {
   let found = null;
-  try { found = await findFunding(address, CHAINS[chain].explorer); } catch (e) { console.error(`Explorer lookup failed: ${e.message}`); }
+  try { found = await findFunding(address, explorerFor(chain)); } catch (e) { console.error(`Explorer lookup failed: ${e.message}`); }
   if (!found) return null;
   savePrivateState({ txid: found.txid, vout: found.vout, amount: found.amount }, chain);
   if (trail && !trail['@id']) {
@@ -441,6 +464,8 @@ async function adoptFunding(address, chain, xonly, trail) {
 async function cmdMark(args) {
   const trail = loadFullTrail();
   if (!trail) { console.error(`No ${TRAIL_FILE} found. Run: git mark init`); process.exit(1); }
+  const closed = closedBy(trail);
+  if (closed) { console.error(`Trail is closed: exodus ${closed}`); process.exit(1); }
   let priv = loadPrivateState();
   const privkey = getPrivkey();
   if (!privkey) { console.error('No private key. Set: git config nostr.privkey <hex>'); process.exit(1); }
@@ -459,7 +484,7 @@ async function cmdMark(args) {
     process.exit(1);
   }
   const chain = trail.chain;
-  const explorer = CHAINS[chain]?.explorer;
+  const explorer = explorerFor(chain);
   if (!explorer) { console.error(`Unknown chain: ${chain}`); process.exit(1); }
 
   // All previous states + current commit
@@ -519,6 +544,78 @@ async function cmdMark(args) {
   }
 }
 
+// The exodus TXO that closed this trail, or null while it is open
+function closedBy(trail) {
+  return gitConfigOr('gitmark.exodus') || trail?.exodus || null;
+}
+
+// Close the trail: spend its coin to an outside address, with no trail output left behind
+async function cmdExodus(args) {
+  const trail = loadFullTrail();
+  if (!trail) { console.error(`No ${TRAIL_FILE} found.`); process.exit(1); }
+  const closed = closedBy(trail);
+  if (closed) { console.error(`Trail is already closed: exodus ${closed}`); process.exit(1); }
+  const dest = args.find(a => !a.startsWith('-'));
+  if (!dest) { console.error('Usage: git mark exodus <address> [--dry]'); process.exit(1); }
+  const chain = trail.chain;
+  const explorer = explorerFor(chain);
+  if (!explorer) { console.error(`Unknown chain: ${chain}`); process.exit(1); }
+  let destScript;
+  try { destScript = addressToScript(dest, chain); } catch (e) { console.error(e.message); process.exit(1); }
+  const priv = loadPrivateState();
+  if (!priv) { console.error('No trail coin to send (gitmark.txo is not set).'); process.exit(1); }
+  const privkey = getPrivkey();
+  if (!privkey) { console.error('No private key. Set: git config nostr.privkey <hex>'); process.exit(1); }
+
+  // The coin sits at the address chained through every marked state
+  const signingKey = trail.states.length > 0
+    ? deriveChainedPrivkey(hexToBytes(privkey), trail.states)
+    : hexToBytes(privkey);
+
+  const txResp = await fetch(`${explorer}/tx/${priv.txid}`);
+  if (!txResp.ok) { console.error('Could not fetch current UTXO'); process.exit(1); }
+  const txData = await txResp.json();
+  const prevOut = txData.vout?.[priv.vout];
+  if (!prevOut) { console.error('Current UTXO not found'); process.exit(1); }
+
+  const fee = 300;
+  const outputAmount = priv.amount - fee;
+  if (outputAmount <= 546) { console.error('Trail UTXO too small to send.'); process.exit(1); }
+
+  const rawTx = buildTransaction(
+    { txid: priv.txid, vout: priv.vout, amount: priv.amount, scriptPubKey: hexToBytes(prevOut.scriptpubkey) },
+    [{ amount: outputAmount, scriptPubKey: destScript }],
+    signingKey,
+    { unified: !!CHAINS[chain].unified }
+  );
+
+  console.log(`Spend: txo:${chain}:${priv.txid}:${priv.vout} (${priv.amount} sats)`);
+  console.log(`To:    ${dest}`);
+  console.log(`Send:  ${outputAmount} sats (fee ${fee})`);
+  if (args.includes('--dry')) {
+    console.log(`Raw:   ${rawTx}`);
+    console.log('\nDry run: nothing broadcast.');
+    return;
+  }
+
+  const newTxid = await broadcastTx(rawTx, explorer);
+  const exodus = `txo:${chain}:${newTxid}:0?amount=${outputAmount}&address=${dest}`;
+
+  gitExec(`git config --local gitmark.exodus '${exodus}'`);
+  try { gitExec('git config --local --unset gitmark.txo'); } catch { /* legacy file state */ }
+  // A notes ref of its own, so the mark notes still read as the trail
+  const last = trail.states[trail.states.length - 1];
+  if (last) { try { gitExec(`git notes --ref=exodus add -f -m '${exodus}' '${last}'`); } catch { /* ignore */ } }
+  if (isDirty()) {
+    trail.exodus = exodus;
+    saveTrail(trail);
+  }
+
+  console.log(`Exodus: ${newTxid}`);
+  console.log(`TXO: ${exodus}`);
+  console.log('Trail closed: git mark will not mark again.');
+}
+
 function gitConfigOr(key) { try { return gitExec(`git config ${key}`); } catch { return null; } }
 function gitTry(cmd) { try { return execSync(`git ${cmd}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; } }
 
@@ -569,7 +666,7 @@ async function cmdInfo() {
     console.log(`Last TXO: ${trail.txo[trail.txo.length - 1]}`);
 
     // Check confirmation status of latest tx
-    const explorer = CHAINS[trail.chain]?.explorer;
+    const explorer = explorerFor(trail.chain);
     if (explorer && priv) {
       try {
         const txResp = await fetch(`${explorer}/tx/${priv.txid}`);
@@ -603,7 +700,11 @@ async function cmdInfo() {
       }
     }
   }
-  if (priv) {
+  const closed = closedBy(trail);
+  if (closed) {
+    console.log(`Closed: exodus ${closed}`);
+    console.log('Balance: 0 sats');
+  } else if (priv) {
     console.log(`Balance: ${priv.amount} sats`);
   } else {
     console.log('Balance: unfunded');
@@ -628,7 +729,7 @@ async function cmdVerify() {
     const parsed = parseTxoUri(txoUri);
 
     try {
-      const resp = await fetch(`${chain.explorer}/tx/${parsed.txid}`);
+      const resp = await fetch(`${explorerFor(parsed.chain)}/tx/${parsed.txid}`);
       if (!resp.ok) { console.log(`  [${i}] FAIL — tx not found: ${parsed.txid.slice(0, 16)}...`); ok = false; continue; }
       const txData = await resp.json();
       const out = txData.vout?.[parsed.vout];
@@ -660,7 +761,7 @@ function parseGithubRemote(url) {
 
 // the explorer's web page for a transaction: its API base without /api
 function explorerTxUrl(chain, txid) {
-  const api = CHAINS[chain]?.explorer;
+  const api = explorerFor(chain);
   return api ? `${api.replace(/\/api$/, '')}/tx/${txid}` : null;
 }
 
@@ -705,7 +806,7 @@ export {
   taggedHash, btScalar, deriveChainedPrivkey, deriveChainedPubkey,
   pubkeyToAddress, parseTxoUri, p2trScript, buildTransaction,
   TRAIL_FILE, PRIVATE_FILE, CHAINS, isDirty, loadTrailFromNotes, loadFullTrail,
-  resolveVoucher, consumeVoucher, findFunding,
+  resolveVoucher, consumeVoucher, findFunding, addressToScript, explorerFor,
   parseGithubRemote, explorerTxUrl, badgeMarkdown
 };
 
@@ -717,7 +818,8 @@ const USAGE = `Usage:
   git mark verify                   # verify trail against Bitcoin
   git mark update                   # update blocktrails.json from git notes
   git mark badge                    # print README badge markdown
-  git mark announce                 # publish repo + latest mark to Nostr (NIP-34)`;
+  git mark announce                 # publish repo + latest mark to Nostr (NIP-34)
+  git mark exodus <address> [--dry] # close the trail: send its coin to an address`;
 
 const isMain = process.argv[1]?.endsWith('git-mark.js') || process.argv[1]?.endsWith('git-mark');
 if (isMain) {
@@ -740,6 +842,8 @@ if (isMain) {
     cmdAnnounce();
   } else if (cmd === 'badge') {
     cmdBadge(args.slice(1));
+  } else if (cmd === 'exodus') {
+    cmdExodus(args.slice(1));
   } else if (cmd === 'mark' || !cmd || cmd.startsWith('-')) {
     // only a bare `git mark`, `git mark mark` or flags anchor HEAD; a word we do not know never spends
     if (!existsSync(TRAIL_FILE)) {
