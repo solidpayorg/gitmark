@@ -66,7 +66,7 @@
     Bitcoin, announces the repo on Nostr, and when it is done hands the coin back and closes the trail. Every step is
     one command; every step has a check. Do the steps in order and stop at the first check that fails.</p>
 
-    <p>Tools: <code>npm init agent</code> (create-agent), <code>npx fund-agent@latest</code> (0.0.8 or newer; always <code>@latest</code>, because <code>npx</code> keeps an old copy around),
+    <p>Tools: <code>npm init agent</code> (create-agent), <code>npx fund-agent@latest</code> (0.0.10 or newer; always <code>@latest</code>, because <code>npx</code> keeps an old copy around),
     <code>git mark</code> (gitmark 0.0.82 or newer). Chain used here: <code>txbt4</code>, the BLAKE2b testnet4.
     Nothing below is mainnet.</p>
 
@@ -103,7 +103,7 @@
     <h2 id="s0"><span class="n">0</span>Preconditions</h2>
 <pre>node --version                  # 20 or newer
 git mark --version              # 0.0.82 or newer; else: npm install -g gitmark@latest, or use npx gitmark in place of git mark
-npx fund-agent@latest --version # 0.0.8 or newer; this is what you will run, not what the registry lists
+npx fund-agent@latest --version # 0.0.10 or newer; this is what you will run, not what the registry lists
 export FUND_AGENT_FAUCET=~/.gitmark/faucet.txt   # or the path the operator gave you; export it once, in the shell you keep
 ls "$FUND_AGENT_FAUCET"          # the voucher file; if missing, see "No voucher" below</pre>
     <div class="check"><div class="label">Check</div>
@@ -132,7 +132,7 @@ npm init agent</pre>
 
     <h2 id="s3"><span class="n">3</span>Start the trail</h2>
 <pre>git mark init --chain txbt4</pre>
-    <p>What happens: gitmark finds the coin sitting at the key's base address and adopts it. No spend yet. An unconfirmed coin is fine; the whole loop up to exodus runs on unconfirmed coins, only consolidate waits for a block.</p>
+    <p>What happens: gitmark finds the coin sitting at the key's base address and adopts it. No spend yet. An unconfirmed coin is fine; the whole loop runs on unconfirmed coins, consolidate included from fund-agent 0.0.10.</p>
     <div class="check"><div class="label">Check</div>
       <p><code>git config --local gitmark.txo</code> prints a <code>txo:txbt4:…</code> line, and
       <code>blocktrails.json</code> exists with <code>"states": []</code>.</p></div>
@@ -199,16 +199,15 @@ git mark exodus &lt;that address&gt; --dry</pre>
 
     <h2 id="s8"><span class="n">8</span>Consolidate: the coin rejoins the pool</h2>
     <p>The returned coin sits at the funder's address as a UTXO of its own, which the voucher file does not know about.
-    Once it has confirmed, in any directory. txbt4 blocks are irregular, often ten to thirty minutes apart, so check every
-    few minutes, not faster; the dry run refuses with "unconfirmed coins" until then.</p>
+    In any directory, straight away; unconfirmed coins are merged too:</p>
 <pre>npx fund-agent@latest consolidate --dry-run    # the coins it would merge, the fee, the raw transaction
 npx fund-agent@latest consolidate              # one coin at the voucher address; the file now points at it</pre>
-    <p>What happens: every confirmed coin at the voucher address is spent in one transaction back to the voucher key,
+    <p>What happens: every coin at the voucher address is spent in one transaction back to the voucher key,
     fee 1,000 sats plus 100 per extra input, and the merged coin becomes the voucher.</p>
     <div class="check"><div class="label">Check</div>
       <p>The output ends <code>Voucher file updated:</code> and <code>npx fund-agent@latest status</code> shows one balance that
-      includes the returned sats. Refusals are all safe: "unconfirmed coins" means wait a block, "nothing to merge"
-      means there is one coin already, "not worth the fee" means the pile is under one agent's funding.</p></div>
+      includes the returned sats. Refusals are all safe: "nothing to merge" means there is one coin already, "not worth
+      the fee" means the pile is under one agent's funding.</p></div>
     <p>This closes the loop: the sats that funded the agent are back where the next agent is funded from.</p>
 
     <h2 id="wrong">When things go wrong</h2>
@@ -222,7 +221,6 @@ npx fund-agent@latest consolidate              # one coin at the voucher address
       <tr><td><code>announce</code>: 0/n relays</td><td>relay trouble, not a chain problem</td><td>change <code>nostr.relays</code>, announce again</td></tr>
       <tr><td>explorer errors</td><td>mempool.guide down or rate limited</td><td><code>GITMARK_EXPLORER=&lt;another esplora api&gt;</code> and retry, once</td></tr>
       <tr><td>anything after "broadcast"</td><td>the spend may be on the chain</td><td>look the txid up before retrying</td></tr>
-      <tr><td><code>consolidate</code>: unconfirmed coins</td><td>a funding or a return is in flight</td><td>wait one block, run again</td></tr>
     </table>
 
     <h2 id="novoucher">No voucher</h2>
@@ -295,7 +293,7 @@ $ git mark exodus tb1phkzv6jd…
 Exodus: ef9042bc…
 Trail closed: git mark will not mark again.
 
-$ npx fund-agent@latest consolidate        # 26 minutes later, after the block
+$ npx fund-agent@latest consolidate        # the run waited a block; from 0.0.10 it need not
 Merging 2 coins:
        989,000 sats  txo:txbt4:8febd1d2…:1
          9,100 sats  txo:txbt4:ef9042bc…:0
