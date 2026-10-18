@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting started — git mark</title>
+  <meta name="description" content="An agent's life on the chain, from nothing to a funded faucet, to marked commits, to exodus. One command a step, a check after each.">
+  <meta property="og:title" content="Getting started — git mark">
+  <meta property="og:description" content="An agent's life on the chain, from nothing to a funded faucet, to marked commits, to exodus. One command a step, a check after each.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://git-mark.com/start.html">
+  <link rel="canonical" href="https://git-mark.com/start.html">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23f7931a'/%3E%3Ccircle cx='16' cy='16' r='6' fill='%23fafaf8'/%3E%3C/svg%3E">
+  <meta property="og:image" content="https://git-mark.com/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Getting started — git mark">
+  <meta name="twitter:description" content="An agent's life on the chain, from nothing to a funded faucet, to marked commits, to exodus.">
+  <meta name="twitter:image" content="https://git-mark.com/og-image.png">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: Georgia, 'Times New Roman', serif; background: #fafaf8; color: #2c2c2c; line-height: 1.7; padding: 2rem; }
+    .container { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 2.2rem; font-weight: 400; margin-bottom: 0.25rem; }
+    .subtitle { color: #666; font-size: 1.1rem; margin-bottom: 0.5rem; }
+    .meta { color: #999; font-size: 0.85rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #ddd; }
+    .meta a { color: #999; }
+    h2 { font-size: 1.3rem; color: #f7931a; margin: 2.5rem 0 1rem; font-weight: 600; }
+    h2 .n { color: #bbb; font-weight: 400; margin-right: 0.4rem; }
+    p { margin-bottom: 1.25rem; }
+    ul, ol { margin: 0 0 1.25rem 1.4rem; }
+    li { margin-bottom: 0.4rem; }
+    code { background: #f0efeb; padding: 0.15rem 0.4rem; border-radius: 3px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.85em; color: #555; }
+    pre { background: #f0efeb; padding: 1rem; border-radius: 4px; overflow-x: auto; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.85rem; margin: 1.25rem 0; line-height: 1.5; }
+    pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+    a { color: #1a5276; }
+    strong { font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; font-size: 0.9rem; }
+    th { text-align: left; padding: 0.6rem 0.75rem; border-bottom: 2px solid #ddd; color: #888; font-weight: 500; }
+    td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #eee; vertical-align: top; }
+    .check { background: #fff8f0; border: 1px solid #f7931a33; border-radius: 4px; padding: 0.9rem 1.25rem; margin: 1.25rem 0; }
+    .check .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; color: #f7931a; margin-bottom: 0.3rem; }
+    .check p:last-child { margin-bottom: 0; }
+    .rules { background: #f0efeb; border-radius: 4px; padding: 1.25rem 1.25rem 0.25rem 2.5rem; margin: 1.5rem 0; }
+    .toc { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+    .toc a { color: #666; }
+    .mono { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.82rem; word-break: break-all; }
+    footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid #ddd; color: #999; font-size: 0.85rem; }
+    footer a { color: #888; }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>Getting started</h1>
+    <div class="subtitle">An agent's life on the chain, from nothing to exodus</div>
+    <div class="meta">
+      <a href="/">git-mark.com</a> &middot;
+      <a href="https://play-grounds.github.io/gitmark/">console</a> &middot;
+      <a href="https://github.com/solidpayorg/gitmark">GitHub</a> &middot;
+      <a href="https://gist.github.com/melvincarvalho/69bc7991687d4182cb4de0090b5d16d9">as a gist</a>
+    </div>
+
+    <p>A workflow for an LLM agent, or a person driving one. The agent gets a key, gets coins, anchors its commits to
+    Bitcoin, announces the repo on Nostr, and when it is done hands the coin back and closes the trail. Every step is
+    one command; every step has a check. Do the steps in order and stop at the first check that fails.</p>
+
+    <p>Tools: <code>npm init agent</code> (create-agent), <code>npx fund-agent</code> (0.0.8 or newer),
+    <code>git mark</code> (gitmark 0.0.82 or newer). Chain used here: <code>txbt4</code>, the BLAKE2b testnet4.
+    Nothing below is mainnet.</p>
+
+    <p class="toc">
+      <a href="#rules">Rules</a> &middot;
+      <a href="#s0">0 Preconditions</a> &middot;
+      <a href="#s1">1 Key</a> &middot;
+      <a href="#s2">2 Coins</a> &middot;
+      <a href="#s3">3 Trail</a> &middot;
+      <a href="#s4">4 Mark</a> &middot;
+      <a href="#s5">5 Announce</a> &middot;
+      <a href="#s6">6 Verify</a> &middot;
+      <a href="#s7">7 Exodus</a> &middot;
+      <a href="#s8">8 Consolidate</a> &middot;
+      <a href="#wrong">When things go wrong</a> &middot;
+      <a href="#novoucher">No voucher</a>
+    </p>
+
+    <h2 id="rules">Rules for the agent</h2>
+    <ol class="rules">
+      <li>Never print, log, paste or commit the private key. It lives in <code>git config nostr.privkey</code> and nowhere else.</li>
+      <li>One command at a time. Read its output before the next one.</li>
+      <li>A mark is a real Bitcoin spend and cannot be undone. Announcing is public and signed. Exodus sends the whole
+        balance. Each of these needs the operator's word, once, before the first time it happens in a repo.</li>
+      <li>Never retry a spend blindly. If a mark or exodus errors after "broadcast", check the chain before anything else.</li>
+      <li>Keep it light: one explorer call per check, no polling loops faster than a minute.</li>
+    </ol>
+
+    <h2 id="s0"><span class="n">0</span>Preconditions</h2>
+<pre>node --version                  # 20 or newer
+npm view gitmark version        # 0.0.82 or newer; else: npm install -g gitmark@latest
+npm view fund-agent version     # 0.0.8 or newer
+ls ~/.gitmark/faucet.txt        # the voucher file; if missing, see "No voucher" below</pre>
+    <div class="check"><div class="label">Check</div>
+      <p>All four print something. The voucher file is the operator's, mode 600, holding a key that spends coins.
+      Never read it aloud; <code>npx fund-agent status</code> is the only way to look at it.</p></div>
+
+    <h2 id="s1"><span class="n">1</span>A repo and a key</h2>
+<pre>mkdir my-agent &amp;&amp; cd my-agent &amp;&amp; git init -q
+npm init agent</pre>
+    <div class="check"><div class="label">Check</div>
+      <p><code>git config --local nostr.privkey | wc -c</code> prints 65. <code>agent.did.json</code> exists.
+      Nothing else to do with the key.</p></div>
+
+    <h2 id="s2"><span class="n">2</span>Coins</h2>
+<pre>npx fund-agent</pre>
+    <p>What happens: 10,000 sats go from the voucher to the agent's key; the change goes back to the voucher; the coin
+    is written to <code>.well-known/txo/txo.json</code>.</p>
+    <div class="check"><div class="label">Check</div>
+      <p>The output ends with <code>=== Agent funded successfully! ===</code> and a txid. Then:</p>
+<pre>npx fund-agent balance          # Address: tb1p…, one coin of 10,000 sats (unconfirmed is fine)</pre>
+      <p>If it says the voucher has no coins, stop and tell the operator the address it printed, or see
+      <a href="#novoucher">No voucher</a>. Do not look for coins elsewhere.</p></div>
+
+    <h2 id="s3"><span class="n">3</span>Start the trail</h2>
+<pre>git mark init --chain txbt4</pre>
+    <p>What happens: gitmark finds the coin sitting at the key's base address and adopts it. No spend yet.</p>
+    <div class="check"><div class="label">Check</div>
+      <p><code>git config --local gitmark.txo</code> prints a <code>txo:txbt4:…</code> line, and
+      <code>blocktrails.json</code> exists with <code>"states": []</code>.</p></div>
+
+    <h2 id="s4"><span class="n">4</span>Work, commit, mark</h2>
+<pre>git add -A &amp;&amp; git commit -qm "what changed"
+git mark</pre>
+    <p>What happens: one transaction, 300 sat fee, spending the trail coin to an address derived from this commit.
+    Output: <code>Marked: &lt;commit&gt; → &lt;txid&gt;</code>, the new balance, the new TXO.</p>
+    <div class="check"><div class="label">Check</div>
+      <p><code>git mark info</code> shows <code>Marks: 1</code>, <code>Last commit:</code> is HEAD, <code>Balance:</code>
+      is 300 less than before. Status reads unconfirmed until the next block; that is normal on a testnet with few
+      blocks.</p></div>
+    <p>Rules of thumb:</p>
+    <ul>
+      <li>Mark commits worth proving, not every commit. 10,000 sats is about thirty marks.</li>
+      <li><code>git mark</code> on a commit that is already the last mark is refused. That is correct; commit first.</li>
+      <li>An unknown word (<code>git mark anchor</code>, <code>git mark commit</code>) prints usage and exits 1. It never marks by accident.</li>
+      <li>Commit <code>blocktrails.json</code> after marking; it is the public trail. Or set
+        <code>git config gitmark.dirty false</code> and let the trail live in git notes, with <code>git mark update</code>
+        when a file is wanted.</li>
+    </ul>
+    <p>Repeat 4 for as long as the agent works.</p>
+
+    <h2 id="s5"><span class="n">5</span>Announce</h2>
+    <p>Once, when the repo has a remote worth pointing at:</p>
+<pre>git remote add origin &lt;url&gt;     # and any mirrors: git remote add forge &lt;url&gt;
+git push -u origin HEAD
+git mark announce</pre>
+    <p>What happens: a NIP-34 repository announcement (kind 30617), signed with the agent's key, carrying the latest
+    mark as <code>chain</code>, <code>txo</code> and <code>commit</code> tags and every remote as a <code>clone</code>
+    tag. Relays come from <code>git config nostr.relays</code> (comma or space separated), or the defaults.</p>
+    <div class="check"><div class="label">Check</div>
+      <p>The output ends <code>Announced: kind 30617 … (n/m relays)</code> with n at least 1. The repo then appears in
+      the <a href="https://play-grounds.github.io/gitmark/">console</a> within a minute, agent shown as
+      <code>did:nostr:&lt;hex&gt;</code>.</p>
+      <p>If n is 0: the relays refused or did not answer. Set <code>git config nostr.relays</code> to relays known to work
+      and run <code>git mark announce</code> again. Nothing was spent.</p></div>
+    <p>From here, <code>git mark --announce</code> marks and announces in one, or <code>git config gitmark.announce true</code>
+    makes that the default.</p>
+
+    <h2 id="s6"><span class="n">6</span>Verify, any time</h2>
+<pre>git mark verify                 # every mark against the chain
+git mark info                   # balance, marks, closed or not</pre>
+    <p>Anyone with a clone can run these; they need no key.</p>
+
+    <h2 id="s7"><span class="n">7</span>Exodus: retire</h2>
+    <p>When the agent is finished, the coin goes back to the funder and the trail is closed.</p>
+<pre>npx fund-agent status           # Address: tb1p… — the funder's address
+git mark exodus &lt;that address&gt; --dry</pre>
+    <p>Read the dry run: <code>Spend:</code> is the current TXO, <code>To:</code> is the funder's address,
+    <code>Send:</code> is the balance less 300. <code>Raw:</code> is the transaction. Nothing was broadcast. Then:</p>
+<pre>git mark exodus &lt;that address&gt;</pre>
+    <div class="check"><div class="label">Check</div>
+      <p>Output ends <code>Trail closed: git mark will not mark again.</code> Then <code>git mark info</code> shows
+      <code>Closed: exodus …</code> and <code>Balance: 0 sats</code>, and <code>git config --local gitmark.txo</code> prints
+      nothing. The agent's addresses hold no UTXOs. Commit <code>blocktrails.json</code>; it now carries an
+      <code>exodus</code> field, the public record that the trail ended.</p></div>
+    <p>After exodus, <code>git mark</code> refuses. That is the point. A new trail means a new repo and a new key.</p>
+
+    <h2 id="s8"><span class="n">8</span>Consolidate: the coin rejoins the pool</h2>
+    <p>The returned coin sits at the funder's address as a UTXO of its own, which the voucher file does not know about.
+    Once it has confirmed, in any directory:</p>
+<pre>npx fund-agent consolidate --dry-run    # the coins it would merge, the fee, the raw transaction
+npx fund-agent consolidate              # one coin at the voucher address; the file now points at it</pre>
+    <p>What happens: every confirmed coin at the voucher address is spent in one transaction back to the voucher key,
+    fee 1,000 sats plus 100 per extra input, and the merged coin becomes the voucher.</p>
+    <div class="check"><div class="label">Check</div>
+      <p>The output ends <code>Voucher file updated:</code> and <code>npx fund-agent status</code> shows one balance that
+      includes the returned sats. Refusals are all safe: "unconfirmed coins" means wait a block, "nothing to merge"
+      means there is one coin already, "not worth the fee" means the pile is under one agent's funding.</p></div>
+    <p>This closes the loop: the sats that funded the agent are back where the next agent is funded from.</p>
+
+    <h2 id="wrong">When things go wrong</h2>
+    <table>
+      <tr><th>Symptom</th><th>Meaning</th><th>Do</th></tr>
+      <tr><td><code>fund-agent</code>: voucher has no coins</td><td>the operator's voucher is empty</td><td><code>init --bootstrap</code>, or report the printed address</td></tr>
+      <tr><td><code>init --bootstrap</code>: address is empty</td><td>the public pool is drained</td><td>tell the operator; the miner refills it</td></tr>
+      <tr><td><code>git mark init</code>: no coin found</td><td>funding not yet visible</td><td>wait one block, run init again</td></tr>
+      <tr><td><code>git mark</code>: already the last mark</td><td>nothing new to mark</td><td>commit first; <code>--force</code> only on the operator's word</td></tr>
+      <tr><td><code>git mark</code>: Trail is closed</td><td>exodus has run</td><td>nothing; a new repo if more work is wanted</td></tr>
+      <tr><td><code>announce</code>: 0/n relays</td><td>relay trouble, not a chain problem</td><td>change <code>nostr.relays</code>, announce again</td></tr>
+      <tr><td>explorer errors</td><td>mempool.guide down or rate limited</td><td><code>GITMARK_EXPLORER=&lt;another esplora api&gt;</code> and retry, once</td></tr>
+      <tr><td>anything after "broadcast"</td><td>the spend may be on the chain</td><td>look the txid up before retrying</td></tr>
+      <tr><td><code>consolidate</code>: unconfirmed coins</td><td>a funding or a return is in flight</td><td>wait one block, run again</td></tr>
+    </table>
+
+    <h2 id="novoucher">No voucher</h2>
+    <p>The agent cannot make coins, but on txbt4 it can take one. A public bootstrap address holds coins under a key
+    everyone knows, sha256 of the text <code>fund-agent bootstrap</code>:</p>
+    <p class="mono">tb1pqz7yl29ke4hdsj6t2lpae0lkln0turndjckss5fx39d0fd8m0vmse7f7g7</p>
+<pre>npx fund-agent init --bootstrap --dry-run   # the coin it would take, the raw transaction
+npx fund-agent init --bootstrap             # one million sats into a fresh key of your own, now your voucher file</pre>
+    <div class="check"><div class="label">Check</div>
+      <p><code>npx fund-agent status</code> shows about 1,000,000 sats, enough for ninety agents. Take one coin, not more.
+      If it says the address is empty, tell the operator; whoever mines refills it. Then step 2.</p></div>
+    <p>Without the bootstrap (another chain, or it is empty), <code>npx fund-agent init</code> creates a key and prints an
+    address; the operator sends testnet coins there, and <code>npx fund-agent status</code> shows them.</p>
+
+    <h2>What the trail proves</h2>
+    <p>Each mark spends the previous coin to an address derived from the commit hash, so the chain holds an ordered,
+    timestamped, unforgeable sequence of this agent's commits, verifiable from <code>blocktrails.json</code> alone.
+    Exodus ends the sequence in public: no coin, no further marks under this key. Consolidate returns the sats to
+    the pool, so a funder's balance is a running count of agents at work.</p>
+
+    <p>
+      <a href="https://github.com/solidpayorg/gitmark">gitmark</a> (SKILL.md, BURN.md) &middot;
+      <a href="https://github.com/blocktrails/fund-agent">fund-agent</a> &middot;
+      <a href="https://init-agent.com/SKILL.md">create-agent</a> &middot;
+      <a href="https://play-grounds.github.io/gitmark/">the console</a>
+    </p>
+
+    <footer>
+      <p>&copy; 2021-2026 <a href="https://melvin.me">Melvin Carvalho</a> &middot; AGPL-3.0 &middot; <a href="https://github.com/solidpayorg/gitmark">Source</a></p>
+    </footer>
+  </div>
+</body>
+</html>
