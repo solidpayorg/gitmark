@@ -26,7 +26,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { homedir } from 'os';
 import { unifiedSighash, SIGHASH_ALL, SIGHASH_UNIFIED, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
-import { buildAnnouncement, publish as publishEvent, parseRelays, DEFAULT_RELAYS } from '../lib/announce.js';
+import { buildAnnouncement, buildState, publish as publishEvent, parseRelays, DEFAULT_RELAYS } from '../lib/announce.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PKG = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf8'));
@@ -638,8 +638,9 @@ async function cmdExodus(args) {
 function gitConfigOr(key) { try { return gitExec(`git config ${key}`); } catch { return null; } }
 function gitTry(cmd) { try { return execSync(`git ${cmd}`, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); } catch { return null; } }
 
-// Publish the repo and its latest mark as a NIP-34 announcement, signed with the trail key.
-// Relay trouble is reported and never fails the mark.
+// Publish the repo and its latest mark as a NIP-34 announcement (30617), then the repository
+// state (30618) that says where each branch is, both signed with the trail key. The state is
+// the signal mirrors pull on. Relay trouble is reported and never fails the mark.
 async function announce(mark) {
   const privkey = getPrivkey();
   if (!privkey) { console.error('Announce: no private key in git config nostr.privkey'); return; }
@@ -656,6 +657,10 @@ async function announce(mark) {
   const results = await publishEvent(event, list);
   for (const r of results) console.log(`${r.ok ? '✓' : '✗'} ${r.relay}${r.message ? ` ${r.message}` : ''}`);
   console.log(`Announced: kind ${event.kind} ${event.id.slice(0, 16)}... (${results.filter((r) => r.ok).length}/${results.length} relays)`);
+  const state = buildState({ privkey, repoName, branch, refs, mark, createdAt: event.created_at });
+  const stateResults = await publishEvent(state, list);
+  for (const r of stateResults.filter((r) => !r.ok)) console.log(`✗ ${r.relay}${r.message ? ` ${r.message}` : ''}`);
+  console.log(`State: kind ${state.kind} ${state.id.slice(0, 16)}... (${stateResults.filter((r) => r.ok).length}/${stateResults.length} relays)`);
 }
 
 async function cmdAnnounce() {

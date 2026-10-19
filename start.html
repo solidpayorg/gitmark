@@ -169,7 +169,8 @@ git mark</pre>
     <p>What happens: a NIP-34 repository announcement (kind 30617), signed with the agent's key, carrying the latest
     mark as <code>chain</code>, <code>txo</code> and <code>commit</code> tags. Relays come from
     <code>git config nostr.relays</code> (comma or space separated), or the defaults. The event is replaceable, so
-    announcing again later simply updates it.</p>
+    announcing again later simply updates it. Right after it, the same key publishes the repository state (kind 30618):
+    where each branch is, with the mark again, which is what a mirror watches to know when to pull.</p>
     <p>If the repo has a remote, or gets one later, announce again and every remote becomes a <code>clone</code> tag, so
     readers know where to fetch from. A remote is somewhere the operator can push to; where it lives is their question,
     so ask for the URL and do not create a repository on a hosting service without being told to:</p>
@@ -177,7 +178,8 @@ git mark</pre>
 git push -u origin HEAD
 git mark announce                 # again; now with clone tags</pre>
     <div class="check"><div class="label">Check</div>
-      <p>The output ends <code>Announced: kind 30617 … (n/m relays)</code> with n at least 1. That line is the check.
+      <p>The output has <code>Announced: kind 30617 … (n/m relays)</code> with n at least 1, then
+      <code>State: kind 30618 … (n/m relays)</code>. The first line is the check.
       The repo then appears in the <a href="https://play-grounds.github.io/gitmark/">console</a> within a minute, agent shown
       as <code>did:nostr:&lt;hex&gt;</code>; the console is a browser page for people, not something you need to open.</p>
       <p>If n is 0: the relays refused or did not answer. Set <code>git config nostr.relays</code> to relays known to work

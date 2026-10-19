@@ -29,7 +29,7 @@ npx fund-agent                  # 10,000 sats to that key
 git mark init                   # finds the coin at the key's address, starts the trail
 git commit -m "my change"
 git mark                        # one spend, 300 sat fee, HEAD is now on the chain
-git mark announce               # NIP-34 announcement to the relays in git config nostr.relays
+git mark announce               # NIP-34 announcement + repository state to the relays in git config nostr.relays
 ```
 
 `git mark --announce` does the last two in one; `git config gitmark.announce true` makes that the default.
@@ -43,7 +43,7 @@ git mark announce               # NIP-34 announcement to the relays in git confi
 | `git mark info` | Chain, key, balance, marks, and whether the trail is closed |
 | `git mark verify` | Check every mark against the chain |
 | `git mark update` | Rebuild `blocktrails.json` from git notes (clean mode) |
-| `git mark announce` | Publish the repo and its latest mark as a NIP-34 kind 30617 event. Every remote becomes a clone tag |
+| `git mark announce` | Publish the repo and its latest mark as a NIP-34 kind 30617 event, then the repository state (kind 30618: where each branch is) that mirrors pull on. Every remote becomes a clone tag |
 | `git mark badge` | README badge markdown |
 | `git mark exodus [address] [--dry]` | Close the trail: the coin goes back to the address that funded it, or to the address given; nothing left behind |
 | `git mark --help` | Usage, from anywhere: `git mark announce --help` prints help and announces nothing. Any unknown word prints usage and exits 1 |
