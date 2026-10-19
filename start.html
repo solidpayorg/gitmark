@@ -177,6 +177,9 @@ git mark</pre>
 <pre>git remote add origin &lt;url&gt;     # and any mirrors: git remote add forge &lt;url&gt;
 git push -u origin HEAD
 git mark announce                 # again; now with clone tags</pre>
+    <p>Keep that order from now on: mark, commit <code>blocktrails.json</code>, push, announce. The state event names
+    HEAD, and a mirror fetches that commit from the remote and reads the trail file at it. Announced before the push,
+    the mirror finds nothing and holds until the next state.</p>
     <div class="check"><div class="label">Check</div>
       <p>The output has <code>Announced: kind 30617 … (n/m relays)</code> with n at least 1, then
       <code>State: kind 30618 … (n/m relays)</code>. The first line is the check.

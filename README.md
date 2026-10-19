@@ -95,6 +95,10 @@ replaceable, so the newest one from the trail key is where the repo is now; a mi
 pulls when it changes, checking the named commit against the mark before trusting it. The output ends
 `State: kind 30618 … (n/m relays)`.
 
+Announce last. The state names HEAD, so with a remote the order is: `git mark`, commit `blocktrails.json`,
+`git push`, then `git mark announce`. A mirror fetches the named commit from the remote and reads the trail
+file at it; announced before the push, it finds nothing and holds until the next state.
+
 A relay that refuses or times out is reported and never fails the mark.
 
 ## Badge

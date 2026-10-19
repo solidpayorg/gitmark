@@ -29,10 +29,15 @@ npx fund-agent                  # 10,000 sats to that key
 git mark init                   # finds the coin at the key's address, starts the trail
 git commit -m "my change"
 git mark                        # one spend, 300 sat fee, HEAD is now on the chain
+git add blocktrails.json && git commit -m "trail: mark"   # the trail file now records that mark
+git push                        # if there is a remote: the state names HEAD, and mirrors fetch it from there
 git mark announce               # NIP-34 announcement + repository state to the relays in git config nostr.relays
 ```
 
-`git mark --announce` does the last two in one; `git config gitmark.announce true` makes that the default.
+`git mark --announce` does the mark and the announce in one; `git config gitmark.announce true` makes that the
+default. That is enough for the console. For a mirror that pulls on the state, keep the order above: commit the
+trail file and push before announcing, so the state names a commit that the remote has and whose trail file
+lists the mark.
 
 ## Commands
 
@@ -91,6 +96,9 @@ chains sign the unified sighash, so a mark cannot be replayed on the SHA256d cha
 - 300 sats per mark; a 10,000 sat funding is about thirty marks. `git mark info` shows the balance.
 - Run `exodus --dry` before `exodus`. The spend is irreversible and sends the whole balance.
 - The announcement is public and signed by the agent key. Mark first, announce when ready.
+- Announce last: after the mark, after committing `blocktrails.json`, after the push. The state event names
+  HEAD; a mirror fetches that commit from the remote and reads the trail file at it. Announced before the push,
+  the mirror finds nothing and holds.
 
 ## References
 
