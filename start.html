@@ -156,7 +156,7 @@ git mark</pre>
     <ul>
       <li>Mark commits worth proving, not every commit. 10,000 sats is about thirty marks.</li>
       <li><code>git mark</code> on a commit that is already the last mark is refused. That is correct; commit first.</li>
-      <li>An unknown word (<code>git mark anchor</code>, <code>git mark commit</code>) prints usage and exits 1. It never marks by accident.</li>
+      <li>An unknown word (<code>git mark anchor</code>, <code>git mark commit</code>) prints usage and exits 1, and <code>--help</code> anywhere prints usage and does nothing. But <code>git mark</code> on its own is the mark command, not a status command: it spends 300 sats on HEAD. To look, <code>git mark info</code>.</li>
       <li>Commit <code>blocktrails.json</code> after marking; it is the public trail. Or set
         <code>git config gitmark.dirty false</code> and let the trail live in git notes, with <code>git mark update</code>
         when a file is wanted.</li>

@@ -813,7 +813,7 @@ export {
 // --- CLI ---
 const USAGE = `Usage:
   git mark init [--chain tbtc4] [--voucher txo:...]
-  git mark [--announce] [--force]   # anchor HEAD to Bitcoin
+  git mark [--announce] [--force]   # anchor HEAD to Bitcoin: this spends 300 sats, it is not a status command
   git mark info                     # show trail state
   git mark verify                   # verify trail against Bitcoin
   git mark update                   # update blocktrails.json from git notes
@@ -828,7 +828,8 @@ if (isMain) {
 
   if (cmd === '--version' || cmd === '-v') {
     console.log(PKG.version);
-  } else if (cmd === '--help' || cmd === '-h') {
+  } else if (args.includes('--help') || args.includes('-h')) {
+    // help anywhere means help: "git mark announce --help" must never announce
     console.log(USAGE);
   } else if (cmd === 'init') {
     cmdInit(args.slice(1));

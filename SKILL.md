@@ -45,7 +45,7 @@ git mark announce               # NIP-34 announcement to the relays in git confi
 | `git mark announce` | Publish the repo and its latest mark as a NIP-34 kind 30617 event. Every remote becomes a clone tag |
 | `git mark badge` | README badge markdown |
 | `git mark exodus <address> [--dry]` | Close the trail: spend the coin to the address, nothing left behind |
-| `git mark --help` | Usage. Any unknown word prints usage and exits 1; it never marks by accident |
+| `git mark --help` | Usage, from anywhere: `git mark announce --help` prints help and announces nothing. Any unknown word prints usage and exits 1 |
 
 ## Exodus: retiring an agent
 
@@ -84,6 +84,8 @@ chains sign the unified sighash, so a mark cannot be replayed on the SHA256d cha
 
 ## Security Notes
 
+- `git mark` with no word is the mark command, not a status command: it spends 300 sats on HEAD. To look, use
+  `git mark info`; to learn, `git mark --help`.
 - 300 sats per mark; a 10,000 sat funding is about thirty marks. `git mark info` shows the balance.
 - Run `exodus --dry` before `exodus`. The spend is irreversible and sends the whole balance.
 - The announcement is public and signed by the agent key. Mark first, announce when ready.

@@ -627,6 +627,22 @@ describe('CLI guards', () => {
     rmSync(dir, { recursive: true });
   });
 
+  it('--help after any word prints usage and never acts', () => {
+    const { dir, env, head, run } = repo();
+    execFileSync('git', ['config', '--local', 'nostr.privkey', '11'.repeat(32)], { cwd: dir, env });
+    execFileSync('git', ['config', '--local', 'gitmark.txo', `txo:txbt4:${'ab'.repeat(32)}:0?amount=9700`], { cwd: dir, env });
+    const pub = bytesToHex(secp256k1.getPublicKey(hexToBytes('11'.repeat(32)), true));
+    writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [], txo: [] }));
+    for (const argv of [['announce', '--help'], ['verify', '--help'], ['--help'], ['-h'], ['exodus', 'tb1q', '-h']]) {
+      const r = run(...argv);
+      assert.strictEqual(r.status, 0, argv.join(' '));
+      assert.match(r.stdout, /Usage:/);
+      assert.doesNotMatch(r.stdout + r.stderr, /Marked|Announced|Verifying|Spend:/);
+    }
+    assert.strictEqual(JSON.parse(readFileSync(join(dir, 'blocktrails.json'), 'utf8')).states.length, 0);
+    rmSync(dir, { recursive: true });
+  });
+
   it('exodus needs an address', () => {
     const { dir, env, head, run } = repo();
     const pub = bytesToHex(secp256k1.getPublicKey(hexToBytes('11'.repeat(32)), true));
