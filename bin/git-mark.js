@@ -537,7 +537,7 @@ async function cmdMark(args) {
   console.log(`Marked: ${head.slice(0, 8)} → ${newTxid.slice(0, 16)}...`);
   console.log(`Address: ${address}`);
   console.log(`Balance: ${outputAmount} sats`);
-  console.log(`TXO: txo:${chain}:${newTxid}:0?commit=${head}`);
+  console.log(`TXO: txo:${chain}:${newTxid}:0?amount=${outputAmount}&commit=${head}`);
 
   if (args.includes('--announce') || gitConfigOr('gitmark.announce') === 'true') {
     await announce({ chain, txo: `txo:${chain}:${newTxid}:0`, commit: head });
@@ -661,9 +661,9 @@ async function cmdInfo() {
   console.log(`Marks: ${trail.states.length}`);
   if (trail.states.length > 0) {
     const currentAddr = pubkeyToAddress(trail.pubkeyBase, trail.states, trail.chain);
-    console.log(`Current address: ${currentAddr}`);
+    console.log(`${closedBy(trail) ? 'Last address (coin spent by exodus)' : 'Current address'}: ${currentAddr}`);
     console.log(`Last commit: ${trail.states[trail.states.length - 1]}`);
-    console.log(`Last TXO: ${trail.txo[trail.txo.length - 1]}`);
+    console.log(`Last TXO${closedBy(trail) ? ' (spent by exodus)' : ''}: ${trail.txo[trail.txo.length - 1]}`);
 
     // Check confirmation status of latest tx
     const explorer = explorerFor(trail.chain);
