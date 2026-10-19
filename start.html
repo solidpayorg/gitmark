@@ -66,7 +66,7 @@
     Bitcoin, announces the repo on Nostr, and when it is done hands the coin back and closes the trail. Every step is
     one command; every step has a check. Do the steps in order and stop at the first check that fails.</p>
 
-    <p>Tools: <code>npm create agent@latest</code> (create-agent 0.0.22 or newer), <code>npx fund-agent@latest</code>
+    <p>Tools: <code>npm create agent@latest</code> (create-agent 0.0.23 or newer), <code>npx fund-agent@latest</code>
     (0.0.10 or newer), <code>git mark</code> (gitmark 0.0.82 or newer). Always <code>@latest</code>, because npm keeps an
     old copy around and reuses it without a word. Chain used here: <code>txbt4</code>, the BLAKE2b testnet4. Nothing
     below is mainnet.</p>
@@ -110,10 +110,11 @@ npx fund-agent@latest --version # 0.0.10 or newer; this is what you will run, no
 export FUND_AGENT_FAUCET=~/.gitmark/faucet.txt   # or the path the operator gave you; export it once, in the shell you keep
 ls "$FUND_AGENT_FAUCET"          # the voucher file; missing is fine on txbt4, the one command makes one</pre>
     <div class="check"><div class="label">Check</div>
-      <p>All four print something. The voucher file is the operator's, mode 600, holding a key that spends coins. Every
-      fund-agent command reads <code>FUND_AGENT_FAUCET</code>, so export it once rather than prefixing each command; a prefix
-      does not reach a default written as <code>${VAR:-…}</code>. The first <code>npx</code> run prints an "npm warn exec …
-      will be installed" line first; that is normal. Never read the file aloud; <code>npx fund-agent@latest status</code>
+      <p>The first four print something; the last may say there is no such file, which is fine on txbt4. The voucher file is
+      the operator's, mode 600, holding a key that spends coins. Every fund-agent command reads <code>FUND_AGENT_FAUCET</code>;
+      export it once if your shell persists, or put the export at the top of every command block if it does not. A first
+      <code>npx</code> or <code>npm create</code> run may print an "npm warn exec … will be installed" line; that is normal.
+      Never read the file aloud; <code>npx fund-agent@latest status</code>
       is the only way to look at it. If it is missing, the one command below takes a coin from the public bootstrap address
       and makes you one; see <a href="#novoucher">No voucher</a> for what that means.</p></div>
 
@@ -125,12 +126,15 @@ npm create agent@latest gitmark</pre>
     (with no voucher file at all, one coin from the public bootstrap address first, which becomes your voucher file);
     <code>git mark init</code>; the generated files committed as "agent identity" and that commit marked, 300 sats; the
     trail committed. It also writes <code>.claude/settings.json</code> with allow rules for its own tools. Nothing else in
-    the directory is touched or committed.</p>
+    the directory is touched or committed. The DID document is printed in full; it is public, only the key is secret.</p>
     <div class="check"><div class="label">Check</div>
       <p>The output ends with what <code>git mark info</code> prints: <code>Marks: 1</code>, <code>Balance: 9700 sats</code>,
       a <code>did:nostr:</code> line under Next. <code>git log --oneline</code> shows two commits, "agent identity" and
       "trail: first mark". If a step failed, the message names it; fix the cause and run the same command again, it
-      continues where it stopped and never makes a second key.</p></div>
+      continues where it stopped and never makes a
+      second key. On create-agent 0.0.22 the <code>trail</code> step could print "Unfunded" when the explorer had not yet
+      seen the funding and the <code>mark</code> step then found the coin anyway; the final <code>Marks: 1</code> is the check,
+      and 0.0.23 waits for the explorer.</p></div>
     <p><code>npm create agent@latest gitmark -- --dry-run</code> prints every step and writes nothing. The same four
     things one at a time, with a check after each, are under <a href="#long">The long way</a>.</p>
 
@@ -142,7 +146,9 @@ git mark</pre>
     <div class="check"><div class="label">Check</div>
       <p><code>git mark info</code> shows one more mark, <code>Last commit:</code> is HEAD, <code>Balance:</code>
       is 300 less than before. Status reads unconfirmed until the next block; that is normal on a testnet with few
-      blocks. The TXO lines carry <code>?amount=…&amp;commit=…</code>; that is the same coin, with its size and commit attached.</p></div>
+      blocks. Check before you commit <code>blocktrails.json</code>: that commit moves HEAD past the marked commit, which is
+      fine, it is the trail travelling with the repo, not something to mark. The TXO lines carry
+      <code>?amount=…&amp;commit=…</code> (the mark's own line from gitmark 0.0.83); it is the same coin with its size and commit attached.</p></div>
     <p>Rules of thumb:</p>
     <ul>
       <li>Mark commits worth proving, not every commit. 10,000 sats is about thirty marks.</li>
@@ -208,11 +214,15 @@ git mark announce                 # again; now with clone tags</pre>
     <h2 id="s6"><span class="n">4</span>Verify, any time</h2>
 <pre>git mark verify                 # every mark against the chain
 git mark info                   # balance, marks, closed or not</pre>
+    <div class="check"><div class="label">Check</div>
+      <p><code>verify</code> lists every mark as <code>OK</code> and ends <code>All marks verified.</code> It works on unconfirmed
+      marks too.</p></div>
     <p>Anyone with a clone can run these; they need no key.</p>
 
     <h2 id="s7"><span class="n">5</span>Exodus: retire</h2>
-    <p>When the agent is finished, the coin goes back to the funder and the trail is closed.</p>
-<pre>npx fund-agent@latest status           # Address: tb1p… — the funder's address
+    <p>When the agent is finished, the coin goes back to the voucher address it came from and the trail is closed. That
+    is the operator's voucher, or, after a bootstrap, the agent's own.</p>
+<pre>npx fund-agent@latest status           # Address: tb1p… — the voucher address
 git mark exodus &lt;that address&gt; --dry</pre>
     <p>Read the dry run: <code>Spend:</code> is the current TXO, <code>To:</code> is the funder's address,
     <code>Send:</code> is the balance less 300. <code>Raw:</code> is the transaction. Nothing was broadcast. Then:</p>
@@ -221,7 +231,8 @@ git mark exodus &lt;that address&gt; --dry</pre>
       <p>Output ends <code>Trail closed: git mark will not mark again.</code> Then <code>git mark info</code> shows
       <code>Closed: exodus …</code> and <code>Balance: 0 sats</code>, and <code>git config --local gitmark.txo</code> prints
       nothing and exits 1, which is git saying the key is unset, not a failure. <code>npx fund-agent@latest balance</code> shows
-      no coins at the base address and the trail line says the coin is spent. Commit <code>blocktrails.json</code>; it now carries an
+      no coins at the base address and no trail line, since there is no trail coin any more. <code>info</code> still lists the
+      last address and TXO, labelled spent from gitmark 0.0.83. Commit <code>blocktrails.json</code>; it now carries an
       <code>exodus</code> field, the public record that the trail ended.</p></div>
     <p>After exodus, <code>git mark</code> refuses. That is the point. A new trail means a new repo and a new key.</p>
 
