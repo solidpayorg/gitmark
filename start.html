@@ -139,7 +139,9 @@ npm create agent@latest gitmark</pre>
     things one at a time, with a check after each, are under <a href="#long">The long way</a>.</p>
 
     <h2 id="s4"><span class="n">2</span>Work, commit, mark</h2>
-<pre>git add -A &amp;&amp; git commit -qm "what changed"   # in a fresh repo the first commit is the three generated files; that is fine
+    <p>Right after the one command the tree is clean and there is nothing to commit; this step is for when the agent has
+    done something.</p>
+<pre>git add -A &amp;&amp; git commit -qm "what changed"
 git mark</pre>
     <p>What happens: one transaction, 300 sat fee, spending the trail coin to an address derived from this commit.
     Output: <code>Marked: &lt;commit&gt; → &lt;txid&gt;</code>, the new balance, the new TXO.</p>
