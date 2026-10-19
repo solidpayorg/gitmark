@@ -73,7 +73,7 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 | `git mark update` | Update blocktrails.json from git notes |
 | `git mark badge` | Print README badge markdown. Option: `--branch` |
 | `git mark announce` | Publish the repo and its latest mark to Nostr (NIP-34 kind 30617) |
-| `git mark exodus <address>` | Close the trail: send its coin to an address, no trail output left. Option: `--dry` (print the transaction, broadcast nothing) |
+| `git mark exodus [address]` | Close the trail: send its coin back to the address that funded it (the first input of the genesis transaction), or to the address given; no trail output left. Option: `--dry` (print the transaction, broadcast nothing) |
 | `git mark --version` | Show version |
 
 ## Announce

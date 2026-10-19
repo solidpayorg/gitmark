@@ -643,13 +643,13 @@ describe('CLI guards', () => {
     rmSync(dir, { recursive: true });
   });
 
-  it('exodus needs an address', () => {
+  it('exodus without an address needs a trail that knows who funded it', () => {
     const { dir, env, head, run } = repo();
     const pub = bytesToHex(secp256k1.getPublicKey(hexToBytes('11'.repeat(32)), true));
     writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [head], txo: [] }));
     const r = run('exodus');
     assert.strictEqual(r.status, 1);
-    assert.match(r.stderr, /Usage: git mark exodus <address>/);
+    assert.match(r.stderr, /Could not find the address that funded this trail. Usage: git mark exodus \[address\]/);
     rmSync(dir, { recursive: true });
   });
 
@@ -678,9 +678,11 @@ describe('CLI guards', () => {
     const coinTxid = 'ab'.repeat(32);
     const txo = `txo:txbt4:${coinTxid}:0?amount=9700&commit=${head}`;
     const dest = pubkeyToAddress(bytesToHex(secp256k1.getPublicKey(hexToBytes('22'.repeat(32)), true)), [], 'txbt4');
+    const fundingTxid = 'cd'.repeat(32);
+    const funder = pubkeyToAddress(bytesToHex(secp256k1.getPublicKey(hexToBytes('33'.repeat(32)), true)), [], 'txbt4');
     execFileSync('git', ['config', '--local', 'nostr.privkey', '11'.repeat(32)], { cwd: dir, env });
     execFileSync('git', ['config', '--local', 'gitmark.txo', txo], { cwd: dir, env });
-    writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [head], txo: [txo] }));
+    writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@id': `txo:txbt4:${fundingTxid}:0?amount=10000&pubkey=${pub.slice(2)}`, '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [head], txo: [txo] }));
 
     const hits = [];
     const server = createServer((req, res) => {
@@ -688,6 +690,9 @@ describe('CLI guards', () => {
       if (req.method === 'GET' && req.url === `/tx/${coinTxid}`) {
         res.setHeader('content-type', 'application/json');
         res.end(JSON.stringify({ txid: coinTxid, vout: [{ scriptpubkey: bytesToHex(p2trScript(chainedXonly)), value: 9700 }] }));
+      } else if (req.method === 'GET' && req.url === `/tx/${fundingTxid}`) {
+        res.setHeader('content-type', 'application/json');
+        res.end(JSON.stringify({ txid: fundingTxid, vin: [{ prevout: { scriptpubkey_address: funder, value: 20000 } }], vout: [] }));
       } else { res.statusCode = 404; res.end('not stubbed'); }
     });
     await new Promise(r => server.listen(0, '127.0.0.1', r));
@@ -722,6 +727,21 @@ describe('CLI guards', () => {
       assert.strictEqual(execFileSync('git', ['config', '--local', 'gitmark.txo'], { cwd: dir, env, encoding: 'utf8' }).trim(), txo);
       assert.strictEqual(cp.spawnSync('git', ['config', '--local', 'gitmark.exodus'], { cwd: dir, env }).status, 1);
       assert.ok(!('exodus' in JSON.parse(readFileSync(join(dir, 'blocktrails.json'), 'utf8'))));
+
+      // no address: back to the address that funded the trail, read from the genesis transaction's first input
+      const r2 = await new Promise((resolve) => {
+        const c = cp.spawn(process.execPath, [bin, 'exodus', '--dry'], { cwd: dir, env: { ...env, GITMARK_EXPLORER: explorer } });
+        let stdout = '', stderr = '';
+        c.stdout.on('data', d => { stdout += d; });
+        c.stderr.on('data', d => { stderr += d; });
+        c.on('close', status => resolve({ status, stdout, stderr }));
+      });
+      assert.strictEqual(r2.status, 0, r2.stderr);
+      assert.match(r2.stdout, new RegExp(`To:\\s+${funder} \\(the address that funded this trail\\)`));
+      const raw2 = r2.stdout.match(/^Raw:\s+([0-9a-f]+)$/m)[1];
+      const tx2 = parseTransaction(hexToBytes(raw2));
+      assert.deepStrictEqual(tx2.outputs[0].script, addressToScript(funder, 'txbt4'));
+      assert.ok(hits.includes(`GET /tx/${fundingTxid}`));
     } finally {
       server.close();
       rmSync(dir, { recursive: true });

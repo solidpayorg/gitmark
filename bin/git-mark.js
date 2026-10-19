@@ -11,7 +11,7 @@
  *   git mark update
  *   git mark badge [--branch name]
  *   git mark announce              Publish the repo and its latest mark to Nostr (NIP-34)
- *   git mark exodus <address> [--dry]   Close the trail: send its coin to an address (--dry-run works too)
+ *   git mark exodus [address] [--dry]   Close the trail: send its coin back to the address that funded it, or to an address
  *
  * git mark --announce, or git config gitmark.announce true, announces after every mark.
  * Relays: git config nostr.relays "wss://a,wss://b" (comma or space separated).
@@ -549,17 +549,36 @@ function closedBy(trail) {
   return gitConfigOr('gitmark.exodus') || trail?.exodus || null;
 }
 
+// The address that funded this trail: the first input of the transaction that paid the genesis coin
+// (fund-agent's voucher, a faucet, a wallet). The genesis coin is the trail's @id.
+async function funderAddress(trail, explorer) {
+  const m = String(trail['@id'] || '').match(/^txo:[a-z0-9]+:([0-9a-f]{64}):/);
+  if (!m) return null;
+  try {
+    const resp = await fetch(`${explorer}/tx/${m[1]}`);
+    if (!resp.ok) return null;
+    const tx = await resp.json();
+    return tx.vin?.[0]?.prevout?.scriptpubkey_address || null;
+  } catch { return null; }
+}
+
 // Close the trail: spend its coin to an outside address, with no trail output left behind
 async function cmdExodus(args) {
   const trail = loadFullTrail();
   if (!trail) { console.error(`No ${TRAIL_FILE} found.`); process.exit(1); }
   const closed = closedBy(trail);
   if (closed) { console.error(`Trail is already closed: exodus ${closed}`); process.exit(1); }
-  const dest = args.find(a => !a.startsWith('-'));
-  if (!dest) { console.error('Usage: git mark exodus <address> [--dry]'); process.exit(1); }
   const chain = trail.chain;
   const explorer = explorerFor(chain);
   if (!explorer) { console.error(`Unknown chain: ${chain}`); process.exit(1); }
+  // No address means back where the coins came from: the address that funded this trail
+  let dest = args.find(a => !a.startsWith('-'));
+  let destNote = '';
+  if (!dest) {
+    dest = await funderAddress(trail, explorer);
+    if (!dest) { console.error('Could not find the address that funded this trail. Usage: git mark exodus [address] [--dry]'); process.exit(1); }
+    destNote = ' (the address that funded this trail)';
+  }
   let destScript;
   try { destScript = addressToScript(dest, chain); } catch (e) { console.error(e.message); process.exit(1); }
   const priv = loadPrivateState();
@@ -590,7 +609,7 @@ async function cmdExodus(args) {
   );
 
   console.log(`Spend: txo:${chain}:${priv.txid}:${priv.vout} (${priv.amount} sats)`);
-  console.log(`To:    ${dest}`);
+  console.log(`To:    ${dest}${destNote}`);
   console.log(`Send:  ${outputAmount} sats (fee ${fee})`);
   if (args.includes('--dry') || args.includes('--dry-run')) {
     console.log(`Raw:   ${rawTx}`);
@@ -819,7 +838,7 @@ const USAGE = `Usage:
   git mark update                   # update blocktrails.json from git notes
   git mark badge                    # print README badge markdown
   git mark announce                 # publish repo + latest mark to Nostr (NIP-34)
-  git mark exodus <address> [--dry] # close the trail: send its coin to an address`;
+  git mark exodus [address] [--dry] # close the trail: coin back to the address that funded it, or to an address`;
 
 const isMain = process.argv[1]?.endsWith('git-mark.js') || process.argv[1]?.endsWith('git-mark');
 if (isMain) {

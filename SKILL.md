@@ -44,7 +44,7 @@ git mark announce               # NIP-34 announcement to the relays in git confi
 | `git mark update` | Rebuild `blocktrails.json` from git notes (clean mode) |
 | `git mark announce` | Publish the repo and its latest mark as a NIP-34 kind 30617 event. Every remote becomes a clone tag |
 | `git mark badge` | README badge markdown |
-| `git mark exodus <address> [--dry]` | Close the trail: spend the coin to the address, nothing left behind |
+| `git mark exodus [address] [--dry]` | Close the trail: the coin goes back to the address that funded it, or to the address given; nothing left behind |
 | `git mark --help` | Usage, from anywhere: `git mark announce --help` prints help and announces nothing. Any unknown word prints usage and exits 1 |
 
 ## Exodus: retiring an agent
@@ -53,11 +53,12 @@ A trail holds one coin. When the agent is done, the coin goes back to whoever fu
 so nothing can be marked under its name again.
 
 ```bash
-git mark exodus <address> --dry   # prints the transaction, broadcasts nothing: read it first
-git mark exodus <address>         # spends the whole balance less the 300 sat fee to the address
+git mark exodus --dry   # prints the transaction, broadcasts nothing: read it first
+git mark exodus         # the whole balance less the 300 sat fee, back to the address that funded the trail
 ```
 
-The funder's address is what `npx fund-agent status` prints. After exodus:
+With no address, the coin goes back where it came from: the first input of the transaction that paid the
+genesis coin, looked up on the explorer. Give an address to send it somewhere else. After exodus:
 
 - the closing coin is in `git config gitmark.exodus`, a note under `refs/notes/exodus`, and `exodus` in
   `blocktrails.json`;

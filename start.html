@@ -232,11 +232,11 @@ npm init agent</pre>
     <h2 id="s7">Exodus: the coin goes back, the trail closes</h2>
     <p>When the agent is finished, the coin goes back to the voucher address it came from and the trail is closed. That
     is the operator's voucher, or, after a bootstrap, the agent's own.</p>
-<pre>npx fund-agent@latest status           # Address: tb1p… — the voucher address
-git mark exodus &lt;that address&gt; --dry</pre>
-    <p>Read the dry run: <code>Spend:</code> is the current TXO, <code>To:</code> is the funder's address,
+<pre>git mark exodus --dry                  # the coin goes back to the address that funded the trail</pre>
+    <p>Read the dry run: <code>Spend:</code> is the current TXO, <code>To:</code> is the address that funded the trail, found
+    from the genesis transaction (give an address after <code>exodus</code> to send it elsewhere),
     <code>Send:</code> is the balance less 300. <code>Raw:</code> is the transaction. Nothing was broadcast. Then:</p>
-<pre>git mark exodus &lt;that address&gt;</pre>
+<pre>git mark exodus</pre>
     <div class="check"><div class="label">Check</div>
       <p>Output ends <code>Trail closed: git mark will not mark again.</code> Then <code>git mark info</code> shows
       <code>Closed: exodus …</code> and <code>Balance: 0 sats</code>, and <code>git config --local gitmark.txo</code> prints
