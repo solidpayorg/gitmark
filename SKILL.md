@@ -18,7 +18,8 @@ real transaction, so a commit's existence at a point in time is provable from th
 - After `npm init agent` and `npx fund-agent`, to start a trail: `git mark init`.
 - After any commit worth proving: `git mark`.
 - To make the repo and its latest mark findable: `git mark announce`.
-- When the agent retires: `git mark exodus <address>`, which returns the coin and closes the trail.
+- When the agent retires, and only on the operator's word: `git mark exodus`, which sends the coin back to the
+  address that funded it and closes the trail.
 
 ## The loop
 
