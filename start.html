@@ -64,7 +64,9 @@
 
     <p>A workflow for an LLM agent, or a person driving one. The agent gets a key, gets coins, anchors its commits to
     Bitcoin, announces the repo on Nostr, and when it is done hands the coin back and closes the trail. Every step is
-    one command; every step has a check. Do the steps in order and stop at the first check that fails.</p>
+    one command; every step has a check. Do the numbered steps in order and stop at the first check that fails. The
+    numbered steps end at verify: from then on the agent works and marks, for as long as it exists. Retiring an agent is
+    a separate section at the bottom and is never part of a run.</p>
 
     <p>Tools: <code>npm create agent@latest</code> (create-agent 0.0.23 or newer), <code>npx fund-agent@latest</code>
     (0.0.10 or newer), <code>git mark</code> (gitmark 0.0.82 or newer). Always <code>@latest</code>, because npm keeps an
@@ -78,10 +80,9 @@
       <a href="#s4">2 Mark</a> &middot;
       <a href="#s5">3 Announce</a> &middot;
       <a href="#s6">4 Verify</a> &middot;
-      <a href="#s7">5 Exodus</a> &middot;
-      <a href="#s8">6 Consolidate</a> &middot;
-      <a href="#wrong">When things go wrong</a> &middot;
       <a href="#long">The long way</a> &middot;
+      <a href="#retire">Retiring an agent</a> &middot;
+      <a href="#wrong">When things go wrong</a> &middot;
       <a href="#novoucher">No voucher</a>
     </p>
 
@@ -162,34 +163,6 @@ git mark</pre>
     </ul>
     <p>Repeat 2 for as long as the agent works.</p>
 
-    <h2 id="long">The long way: the same four things one at a time</h2>
-    <p>Only if you want to see each piece, or the one command is not available. Otherwise skip to <a href="#s4">2 Mark</a>.</p>
-
-    <h2 id="s1"><span class="n">a</span>A repo and a key</h2>
-<pre>mkdir my-agent &amp;&amp; cd my-agent &amp;&amp; git init -q   # any name; "my-agent" is a placeholder
-npm init agent</pre>
-    <div class="check"><div class="label">Check</div>
-      <p><code>git config --local nostr.privkey | wc -c</code> prints 65. <code>agent.did.json</code> exists.
-      Nothing else to do with the key.</p></div>
-
-    <h2 id="s2"><span class="n">b</span>Coins</h2>
-<pre>npx fund-agent@latest</pre>
-    <p>What happens: 10,000 sats go from the voucher to the agent's key; the change goes back to the voucher; the coin
-    is written to <code>.well-known/txo/txo.json</code>.</p>
-    <div class="check"><div class="label">Check</div>
-      <p>The output contains <code>Transaction broadcast: &lt;txid&gt;</code> and ends with <code>=== Agent funded successfully! ===</code>. Then:</p>
-<pre>npx fund-agent@latest balance          # Address: tb1p…, one coin of 10,000 sats (unconfirmed is fine)</pre>
-      <p>If it says the voucher has no coins, stop and tell the operator the address it printed, or see
-      <a href="#novoucher">No voucher</a>. Do not look for coins elsewhere.</p></div>
-
-    <h2 id="s3"><span class="n">c</span>Start the trail</h2>
-<pre>git mark init --chain txbt4</pre>
-    <p>What happens: gitmark finds the coin sitting at the key's base address and adopts it. No spend yet. An unconfirmed coin is fine; the whole loop runs on unconfirmed coins, consolidate included from fund-agent 0.0.10.</p>
-    <div class="check"><div class="label">Check</div>
-      <p><code>git config --local gitmark.txo</code> prints a <code>txo:txbt4:…</code> line, and
-      <code>blocktrails.json</code> exists with <code>"states": []</code>. Then commit the generated files and go to
-      <a href="#s4">2 Mark</a>.</p></div>
-
     <h2 id="s5"><span class="n">3</span>Announce</h2>
     <p>Any time after the first mark. No remote is needed:</p>
 <pre>git mark announce</pre>
@@ -221,7 +194,42 @@ git mark info                   # balance, marks, closed or not</pre>
       marks too.</p></div>
     <p>Anyone with a clone can run these; they need no key.</p>
 
-    <h2 id="s7"><span class="n">5</span>Exodus: retire</h2>
+    <h2 id="long">The long way: the same four things one at a time</h2>
+    <p>Only if you want to see each piece, or the one command is not available. Steps a to c replace step 1; then continue at <a href="#s4">2 Mark</a>.</p>
+
+    <h2 id="s1"><span class="n">a</span>A repo and a key</h2>
+<pre>mkdir my-agent &amp;&amp; cd my-agent &amp;&amp; git init -q   # any name; "my-agent" is a placeholder
+npm init agent</pre>
+    <div class="check"><div class="label">Check</div>
+      <p><code>git config --local nostr.privkey | wc -c</code> prints 65. <code>agent.did.json</code> exists.
+      Nothing else to do with the key.</p></div>
+
+    <h2 id="s2"><span class="n">b</span>Coins</h2>
+<pre>npx fund-agent@latest</pre>
+    <p>What happens: 10,000 sats go from the voucher to the agent's key; the change goes back to the voucher; the coin
+    is written to <code>.well-known/txo/txo.json</code>.</p>
+    <div class="check"><div class="label">Check</div>
+      <p>The output contains <code>Transaction broadcast: &lt;txid&gt;</code> and ends with <code>=== Agent funded successfully! ===</code>. Then:</p>
+<pre>npx fund-agent@latest balance          # Address: tb1p…, one coin of 10,000 sats (unconfirmed is fine)</pre>
+      <p>If it says the voucher has no coins, stop and tell the operator the address it printed, or see
+      <a href="#novoucher">No voucher</a>. Do not look for coins elsewhere.</p></div>
+
+    <h2 id="s3"><span class="n">c</span>Start the trail</h2>
+<pre>git mark init --chain txbt4</pre>
+    <p>What happens: gitmark finds the coin sitting at the key's base address and adopts it. No spend yet. An unconfirmed coin is fine; the whole loop runs on unconfirmed coins, consolidate included from fund-agent 0.0.10.</p>
+    <div class="check"><div class="label">Check</div>
+      <p><code>git config --local gitmark.txo</code> prints a <code>txo:txbt4:…</code> line, and
+      <code>blocktrails.json</code> exists with <code>"states": []</code>. Then commit the generated files and go to
+      <a href="#s4">2 Mark</a>.</p></div>
+
+    <h2 id="retire">Retiring an agent</h2>
+    <div class="check"><div class="label">Not part of a run</div>
+      <p>Nothing below happens in the loop above. An agent runs for as long as it has work and coins, marking as it goes.
+      Only when the operator says the agent is finished, in so many words, does it do the two things here: hand its coin
+      back and close its trail, then let the funder fold the coin into the pool. An agent never decides this for itself,
+      and a guide that says "follow to the end" does not mean this section.</p></div>
+
+    <h2 id="s7">Exodus: the coin goes back, the trail closes</h2>
     <p>When the agent is finished, the coin goes back to the voucher address it came from and the trail is closed. That
     is the operator's voucher, or, after a bootstrap, the agent's own.</p>
 <pre>npx fund-agent@latest status           # Address: tb1p… — the voucher address
@@ -238,7 +246,7 @@ git mark exodus &lt;that address&gt; --dry</pre>
       <code>exodus</code> field, the public record that the trail ended.</p></div>
     <p>After exodus, <code>git mark</code> refuses. That is the point. A new trail means a new repo and a new key.</p>
 
-    <h2 id="s8"><span class="n">6</span>Consolidate: the coin rejoins the pool</h2>
+    <h2 id="s8">Consolidate: the coin rejoins the pool</h2>
     <p>The returned coin sits at the funder's address as a UTXO of its own, which the voucher file does not know about.
     In any directory, straight away; unconfirmed coins are merged too:</p>
 <pre>npx fund-agent@latest consolidate --dry-run    # the coins it would merge, the fee, the raw transaction
@@ -344,26 +352,9 @@ Verifying 2 mark(s)...
   [0] OK — ce37c7f3 → tb1pp0ccxe8…
   [1] OK — e28ff044 → tb1pw8f0tu8…
 All marks verified.
-
-$ git mark exodus tb1phkzv6jd… --dry
-Spend: txo:txbt4:2c19d965…:0 (9400 sats)
-To:    tb1phkzv6jd…
-Send:  9100 sats (fee 300)
-Dry run: nothing broadcast.
-$ git mark exodus tb1phkzv6jd…
-Exodus: ef9042bc…
-Trail closed: git mark will not mark again.
-
-$ npx fund-agent@latest consolidate        # the run waited a block; from 0.0.10 it need not
-Merging 2 coins:
-       989,000 sats  txo:txbt4:8febd1d2…:1
-         9,100 sats  txo:txbt4:ef9042bc…:0
-  Total:  998,100 sats
-  Fee:    1,100 sats
-  Output: 997,000 sats back to the voucher address
-Transaction broadcast: 18ce062d…
-Voucher file updated: /home/you/agent/faucet.txt</pre>
-    <p>Six transactions, 4,000 sats spent in fees and marks, and a faucet that still funds ninety agents.</p>
+</pre>
+    <p>Four transactions, 2,600 sats in fees and marks, and a live agent with 9,400 sats of marks ahead of it. That run went on
+    to retire itself because its brief said to run every section; a working agent stops here and keeps marking.</p>
 
     <h2>What the trail proves</h2>
     <p>Each mark spends the previous coin to an address derived from the commit hash, so the chain holds an ordered,
