@@ -72,7 +72,7 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 | `git mark verify` | Verify all marks against Bitcoin |
 | `git mark update` | Update blocktrails.json from git notes |
 | `git mark badge` | Print README badge markdown. Option: `--branch` |
-| `git mark announce` | Publish the repo and its latest mark to Nostr (NIP-34 kind 30617) |
+| `git mark announce` | Publish the repo and its latest mark to Nostr (NIP-34 kind 30617), then where each branch is (kind 30618) |
 | `git mark exodus [address]` | Close the trail: send its coin back to the address that funded it (the first input of the genesis transaction), or to the address given; no trail output left. Option: `--dry` (print the transaction, broadcast nothing) |
 | `git mark --version` | Show version |
 
@@ -88,6 +88,12 @@ git config nostr.relays "wss://relay.damus.io,wss://nos.lol"   # comma or space 
 git mark --announce                                            # announce after this mark
 git config gitmark.announce true                               # announce after every mark
 ```
+
+Right after the announcement, the same key publishes the repository state (kind 30618): `d`, `HEAD`, one
+`refs/heads/<branch>` tag per branch with its commit, and the mark again as `chain`, `txo`, `commit`. It is
+replaceable, so the newest one from the trail key is where the repo is now; a mirror subscribes to it and
+pulls when it changes, checking the named commit against the mark before trusting it. The output ends
+`State: kind 30618 … (n/m relays)`.
 
 A relay that refuses or times out is reported and never fails the mark.
 

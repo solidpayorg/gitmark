@@ -10,7 +10,7 @@ import {
   parseGithubRemote, explorerTxUrl, badgeMarkdown
 } from '../bin/git-mark.js';
 import { unifiedSighash, parseTransaction, SCRIPT_TYPE_TAPROOT } from '../lib/unified-sighash.js';
-import { buildAnnouncement, publish, parseRelays, remoteUrls, allRemoteUrls, KIND_REPOSITORY } from '../lib/announce.js';
+import { buildAnnouncement, buildState, publish, parseRelays, remoteUrls, allRemoteUrls, KIND_REPOSITORY, KIND_STATE } from '../lib/announce.js';
 import { sha256 } from '@noble/hashes/sha256';
 import { schnorr } from '@noble/curves/secp256k1';
 import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'fs';
@@ -570,6 +570,24 @@ describe('Announce (NIP-34 kind 30617)', () => {
     assert.deepStrictEqual(tag('txo'), ['txo', mark.txo]);
     assert.deepStrictEqual(tag('commit'), ['commit', mark.commit]);
     assert.match(ev.content, /de04775b anchored on txbt4/);
+  });
+
+  it('builds the repository state: kind 30618 with the refs, HEAD and the mark, signed by the same key', () => {
+    const refs = [['refs/heads/main', 'ff'.repeat(20)], ['refs/heads/dev', 'ee'.repeat(20)]];
+    const ev = buildState({ privkey, repoName: 'demo', branch: 'main', refs, mark, createdAt: 1760000000 });
+    assert.strictEqual(ev.kind, KIND_STATE);
+    assert.strictEqual(ev.pubkey, bytesToHex(schnorr.getPublicKey(hexToBytes(privkey))));
+    const serialized = JSON.stringify([0, ev.pubkey, ev.created_at, ev.kind, ev.tags, ev.content]);
+    assert.strictEqual(ev.id, bytesToHex(sha256(new TextEncoder().encode(serialized))));
+    assert.ok(schnorr.verify(ev.sig, ev.id, ev.pubkey));
+    assert.deepStrictEqual(ev.tags, [
+      ['d', 'demo'], ['HEAD', 'ref: refs/heads/main'], ...refs,
+      ['chain', 'txbt4'], ['txo', mark.txo], ['commit', mark.commit],
+    ]);
+    assert.strictEqual(ev.content, '');
+    assert.ok(!ev.tags.some((t) => t[0] === 'clone' || t[0] === 'web' || t[0] === 'name'), 'state carries no announcement tags');
+    const bare = buildState({ privkey, repoName: 'demo', createdAt: 1760000000 });
+    assert.deepStrictEqual(bare.tags, [['d', 'demo']]);
   });
 
   it('publishes to each relay and reports its OK, timeout or refusal', async () => {
