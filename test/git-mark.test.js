@@ -466,6 +466,41 @@ describe('Signing', () => {
   });
 });
 
+describe('Top-up: a voucher coin as a second input', () => {
+  const trailKey = hexToBytes('11'.repeat(32));
+  const trailXonly = secp256k1.getPublicKey(trailKey, true).slice(1);
+  const voucherKey = hexToBytes('22'.repeat(32));
+  const voucherXonly = secp256k1.getPublicKey(voucherKey, true).slice(1);
+  // a wallet/faucet coin sits at the BIP341-tweaked output key
+  const t = BigInt('0x' + bytesToHex(taggedHash('TapTweak', voucherXonly)));
+  const tweakedXonly = secp256k1.ProjectivePoint.fromHex('02' + bytesToHex(voucherXonly))
+    .add(secp256k1.ProjectivePoint.BASE.multiply(t)).toRawBytes(true).slice(1);
+  const trailIn = { txid: 'ab'.repeat(32), vout: 0, amount: 1000, scriptPubKey: p2trScript(trailXonly) };
+  const outputs = [{ amount: 100700, scriptPubKey: p2trScript(new Uint8Array(32).fill(7)) }];
+
+  for (const [label, script, signer] of [['untweaked', p2trScript(voucherXonly), voucherXonly], ['tweaked', p2trScript(tweakedXonly), tweakedXonly]]) {
+    it(`signs each input with its own key, unified (${label} voucher)`, () => {
+      const voucherIn = { txid: 'cd'.repeat(32), vout: 1, amount: 100000, scriptPubKey: script, privkey: voucherKey };
+      const tx = parseTransaction(hexToBytes(buildTransaction([trailIn, voucherIn], outputs, trailKey, { unified: true })));
+      assert.strictEqual(tx.inputs.length, 2);
+      assert.strictEqual(tx.outputs.length, 1);
+      const spent = [trailIn, voucherIn].map(i => ({ value: BigInt(i.amount), script: i.scriptPubKey }));
+      for (const [i, pub] of [[0, trailXonly], [1, signer]]) {
+        const sig = tx.inputs[i].witness[0];
+        assert.strictEqual(sig[64], 0x21);
+        assert.ok(schnorr.verify(sig.slice(0, 64), unifiedSighash(tx, i, 0x21, SCRIPT_TYPE_TAPROOT, spent), pub), `input ${i}`);
+      }
+    });
+  }
+
+  it('a single input still builds as before', () => {
+    const one = buildTransaction(trailIn, outputs, trailKey, { unified: true });
+    const arr = buildTransaction([trailIn], outputs, trailKey, { unified: true });
+    assert.strictEqual(parseTransaction(hexToBytes(one)).inputs.length, 1);
+    assert.strictEqual(one.length, arr.length);
+  });
+});
+
 describe('Badge', () => {
   it('reads owner and repo from GitHub remotes in every form', () => {
     for (const url of [
@@ -760,6 +795,79 @@ describe('CLI guards', () => {
       const tx2 = parseTransaction(hexToBytes(raw2));
       assert.deepStrictEqual(tx2.outputs[0].script, addressToScript(funder, 'txbt4'));
       assert.ok(hits.includes(`GET /tx/${fundingTxid}`));
+    } finally {
+      server.close();
+      rmSync(dir, { recursive: true });
+    }
+  });
+
+  // --topup end to end against a stub explorer: the voucher file is read, the mark spends the trail
+  // coin plus the voucher coin into the next trail address, the broadcast goes out, the voucher is
+  // consumed and the trail records the mark. A voucher for another chain is refused before any spend.
+  it('mark --topup spends trail coin + voucher coin to the next address and consumes the voucher', async () => {
+    const { dir, env, head } = repo();
+    const key = hexToBytes('11'.repeat(32));
+    const pub = bytesToHex(secp256k1.getPublicKey(key, true));
+    const baseXonly = secp256k1.getPublicKey(key, true).slice(1);
+    const voucherKey = '22'.repeat(32);
+    const voucherXonly = secp256k1.getPublicKey(hexToBytes(voucherKey), true).slice(1);
+    const coinTxid = 'ab'.repeat(32), voucherTxid = 'cd'.repeat(32), newTxid = 'ef'.repeat(32);
+    execFileSync('git', ['config', '--local', 'nostr.privkey', '11'.repeat(32)], { cwd: dir, env });
+    execFileSync('git', ['config', '--local', 'gitmark.txo', `txo:txbt4:${coinTxid}:0?amount=9700`], { cwd: dir, env });
+    writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [], txo: [] }));
+    const vfile = join(dir, 'voucher.txt');
+
+    const hits = [];
+    let posted = null;
+    const server = createServer((req, res) => {
+      hits.push(`${req.method} ${req.url}`);
+      const json = (o) => { res.setHeader('content-type', 'application/json'); res.end(JSON.stringify(o)); };
+      if (req.method === 'GET' && req.url === `/tx/${coinTxid}`) json({ txid: coinTxid, vout: [{ scriptpubkey: bytesToHex(p2trScript(baseXonly)), value: 9700 }] });
+      else if (req.method === 'GET' && req.url === `/tx/${voucherTxid}`) json({ txid: voucherTxid, vout: [{ scriptpubkey: bytesToHex(p2trScript(voucherXonly)), value: 10000 }] });
+      else if (req.method === 'POST' && req.url === '/tx') { let b = ''; req.on('data', d => { b += d; }); req.on('end', () => { posted = b; res.end(newTxid); }); }
+      else { res.statusCode = 404; res.end('not stubbed'); }
+    });
+    await new Promise(r => server.listen(0, '127.0.0.1', r));
+    const explorer = `http://127.0.0.1:${server.address().port}`;
+    const run = (...a) => new Promise((resolve) => {
+      const c = cp.spawn(process.execPath, [bin, ...a], { cwd: dir, env: { ...env, GITMARK_EXPLORER: explorer } });
+      let stdout = '', stderr = '';
+      c.stdout.on('data', d => { stdout += d; });
+      c.stderr.on('data', d => { stderr += d; });
+      c.on('close', status => resolve({ status, stdout, stderr }));
+    });
+    try {
+      // wrong chain: refused, nothing broadcast, voucher untouched
+      writeFileSync(vfile, `txo:tbtc4:${voucherTxid}:0?amount=10000&key=${voucherKey}\n`);
+      const bad = await run('--topup', vfile);
+      assert.strictEqual(bad.status, 1);
+      assert.match(bad.stderr, /Voucher is for tbtc4, the trail is on txbt4/);
+      assert.strictEqual(posted, null);
+      assert.match(readFileSync(vfile, 'utf8'), /amount=10000/);
+
+      writeFileSync(vfile, `txo:txbt4:${voucherTxid}:0?amount=10000&key=${voucherKey}\n`);
+      const r = await run('--topup', vfile);
+      assert.strictEqual(r.status, 0, r.stderr);
+      assert.match(r.stdout, /Topped up: \+10000 sats/);
+      assert.match(r.stdout, /Balance: 19400 sats/);
+
+      const tx = parseTransaction(hexToBytes(posted));
+      assert.strictEqual(tx.inputs.length, 2);
+      assert.deepStrictEqual([0, 1].map(i => bytesToHex(Uint8Array.from(tx.inputs[i].txid).reverse())), [coinTxid, voucherTxid]);
+      assert.strictEqual(tx.outputs.length, 1);
+      assert.strictEqual(tx.outputs[0].value, 19400n);
+      const nextXonly = deriveChainedPubkey(hexToBytes(pub), [head]).slice(1);
+      assert.deepStrictEqual(tx.outputs[0].script, p2trScript(nextXonly));
+      const spent = [{ value: 9700n, script: p2trScript(baseXonly) }, { value: 10000n, script: p2trScript(voucherXonly) }];
+      for (const [i, signer] of [[0, baseXonly], [1, voucherXonly]]) {
+        const sig = tx.inputs[i].witness[0];
+        assert.ok(schnorr.verify(sig.slice(0, 64), unifiedSighash(tx, i, 0x21, SCRIPT_TYPE_TAPROOT, spent), signer), `input ${i}`);
+      }
+
+      // voucher consumed, mark recorded
+      assert.strictEqual(readFileSync(vfile, 'utf8').trim(), '');
+      assert.match(execFileSync('git', ['config', '--local', 'gitmark.txo'], { cwd: dir, env, encoding: 'utf8' }), new RegExp(`txo:txbt4:${newTxid}:0\\?amount=19400`));
+      assert.deepStrictEqual(JSON.parse(readFileSync(join(dir, 'blocktrails.json'), 'utf8')).states, [head]);
     } finally {
       server.close();
       rmSync(dir, { recursive: true });
