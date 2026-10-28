@@ -159,20 +159,22 @@ function writeU64LE(n) { const b = new Uint8Array(8); let v = BigInt(n); for (le
 function concatBytes(...arrays) { const r = new Uint8Array(arrays.reduce((s, a) => s + a.length, 0)); let o = 0; for (const a of arrays) { r.set(a, o); o += a.length; } return r; }
 function reverseTxid(txid) { return hexToBytes(txid).reverse(); }
 
-function buildTransaction(input, outputs, privkeyBytes, { unified = false } = {}) {
-  const inputs = [input];
+// The key that signs a key-path spend of `script`: the key itself for an untweaked
+// output (gitmark trail coins), the BIP341-tweaked key otherwise (wallet/faucet coins)
+function keyPathSigner(privkeyBytes, script) {
   const internalXOnly = new Uint8Array(secp256k1.getPublicKey(privkeyBytes, true)).slice(1);
-  const untweakedHex = '5120' + bytesToHex(internalXOnly);
-  const needsTweak = bytesToHex(inputs[0].scriptPubKey) !== untweakedHex;
-  let signingKey = privkeyBytes;
-  if (needsTweak) {
-    const tweak = taggedHash('TapTweak', internalXOnly);
-    const t = bytesToBigInt(tweak);
-    let d = bytesToBigInt(privkeyBytes);
-    const fullPub = secp256k1.getPublicKey(privkeyBytes, false);
-    if (fullPub[64] & 1) d = SECP_N - d;
-    signingKey = bigIntToBytes((d + t) % SECP_N);
-  }
+  if (bytesToHex(script) === '5120' + bytesToHex(internalXOnly)) return privkeyBytes;
+  const t = bytesToBigInt(taggedHash('TapTweak', internalXOnly));
+  let d = bytesToBigInt(privkeyBytes);
+  if (secp256k1.getPublicKey(privkeyBytes, false)[64] & 1) d = SECP_N - d;
+  return bigIntToBytes((d + t) % SECP_N);
+}
+
+// `input` is one input or an array of them; an input may carry its own `privkey`
+// (a top-up voucher), otherwise it is signed with `privkeyBytes`
+function buildTransaction(input, outputs, privkeyBytes, { unified = false } = {}) {
+  const inputs = Array.isArray(input) ? input : [input];
+  const signers = inputs.map(i => keyPathSigner(i.privkey ?? privkeyBytes, i.scriptPubKey));
 
   const version = 2, locktime = 0, sequence = 0xfffffffd;
   const serOutputs = outputs.map(o =>
@@ -197,7 +199,7 @@ function buildTransaction(input, outputs, privkeyBytes, { unified = false } = {}
     const spent = inputs.map(i => ({ value: i.amount, script: i.scriptPubKey }));
     for (let i = 0; i < inputs.length; i++) {
       const sighash = unifiedSighash(tx, i, hashType, SCRIPT_TYPE_TAPROOT, spent);
-      sigs.push(concatBytes(schnorr.sign(sighash, signingKey), new Uint8Array([hashType])));
+      sigs.push(concatBytes(schnorr.sign(sighash, signers[i]), new Uint8Array([hashType])));
     }
   }
   for (let i = 0; !unified && i < inputs.length; i++) {
@@ -209,7 +211,7 @@ function buildTransaction(input, outputs, privkeyBytes, { unified = false } = {}
       writeU32LE(i)
     );
     const sighash = taggedHash('TapSighash', sigMsg);
-    sigs.push(schnorr.sign(sighash, signingKey));
+    sigs.push(schnorr.sign(sighash, signers[i]));
   }
 
   const parts = [
@@ -508,17 +510,40 @@ async function cmdMark(args) {
   const prevOut = txData.vout?.[priv.vout];
   if (!prevOut) { console.error('Current UTXO not found'); process.exit(1); }
 
+  const inputs = [{ txid: priv.txid, vout: priv.vout, amount: priv.amount, scriptPubKey: hexToBytes(prevOut.scriptpubkey) }];
+
+  // --topup <voucher>: the voucher coin rides along as a second input, so the
+  // trail continues with more sats instead of restarting from a new genesis
+  const topupIdx = args.indexOf('--topup');
+  let topup = null;
+  if (topupIdx !== -1) {
+    const arg = args[topupIdx + 1];
+    if (!arg || arg.startsWith('--')) { console.error('Usage: git mark --topup <voucher URI or file>'); process.exit(1); }
+    const { uri, file } = resolveVoucher(arg);
+    const txo = parseTxoUri(uri);
+    if (!txo.key) { console.error('Voucher must include &key= parameter'); process.exit(1); }
+    if (!txo.amount) { console.error('Voucher must include &amount= parameter'); process.exit(1); }
+    if (txo.chain && txo.chain !== chain) { console.error(`Voucher is for ${txo.chain}, the trail is on ${chain}`); process.exit(1); }
+    const vResp = await fetch(`${explorer}/tx/${txo.txid}`);
+    if (!vResp.ok) { console.error('Could not fetch voucher transaction'); process.exit(1); }
+    const vOut = (await vResp.json()).vout?.[txo.vout];
+    if (!vOut) { console.error(`Voucher output ${txo.vout} not found`); process.exit(1); }
+    inputs.push({ txid: txo.txid, vout: txo.vout, amount: txo.amount, scriptPubKey: hexToBytes(vOut.scriptpubkey), privkey: hexToBytes(txo.key) });
+    topup = { amount: txo.amount, file };
+  }
+
   const fee = 300;
-  const outputAmount = priv.amount - fee;
-  if (outputAmount <= 546) { console.error('Trail UTXO too small. Fund with: git mark init --voucher ...'); process.exit(1); }
+  const outputAmount = inputs.reduce((a, i) => a + i.amount, 0) - fee;
+  if (outputAmount <= 546) { console.error('Trail UTXO too small. Top up with: git mark --topup <voucher>'); process.exit(1); }
 
   const rawTx = buildTransaction(
-    { txid: priv.txid, vout: priv.vout, amount: priv.amount, scriptPubKey: hexToBytes(prevOut.scriptpubkey) },
+    inputs,
     [{ amount: outputAmount, scriptPubKey: nextScript }],
     signingKey,
     { unified: !!CHAINS[chain].unified }
   );
   const newTxid = await broadcastTx(rawTx, explorer);
+  if (topup?.file) consumeVoucher(topup.file);
 
   const txoUri = `txo:${chain}:${newTxid}:0?amount=${outputAmount}&commit=${head}`;
 
@@ -536,6 +561,7 @@ async function cmdMark(args) {
   const address = pubkeyToAddress(trail.pubkeyBase, allStates, chain);
   console.log(`Marked: ${head.slice(0, 8)} → ${newTxid.slice(0, 16)}...`);
   console.log(`Address: ${address}`);
+  if (topup) console.log(`Topped up: +${topup.amount} sats`);
   console.log(`Balance: ${outputAmount} sats`);
   console.log(`TXO: txo:${chain}:${newTxid}:0?amount=${outputAmount}&commit=${head}`);
 
@@ -838,6 +864,7 @@ export {
 const USAGE = `Usage:
   git mark init [--chain tbtc4] [--voucher txo:...]
   git mark [--announce] [--force]   # anchor HEAD to Bitcoin: this spends 300 sats, it is not a status command
+  git mark --topup <voucher>        # the same, with a voucher coin added to the trail (no restart)
   git mark info                     # show trail state
   git mark verify                   # verify trail against Bitcoin
   git mark update                   # update blocktrails.json from git notes

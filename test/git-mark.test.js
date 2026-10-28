@@ -466,6 +466,41 @@ describe('Signing', () => {
   });
 });
 
+describe('Top-up: a voucher coin as a second input', () => {
+  const trailKey = hexToBytes('11'.repeat(32));
+  const trailXonly = secp256k1.getPublicKey(trailKey, true).slice(1);
+  const voucherKey = hexToBytes('22'.repeat(32));
+  const voucherXonly = secp256k1.getPublicKey(voucherKey, true).slice(1);
+  // a wallet/faucet coin sits at the BIP341-tweaked output key
+  const t = BigInt('0x' + bytesToHex(taggedHash('TapTweak', voucherXonly)));
+  const tweakedXonly = secp256k1.ProjectivePoint.fromHex('02' + bytesToHex(voucherXonly))
+    .add(secp256k1.ProjectivePoint.BASE.multiply(t)).toRawBytes(true).slice(1);
+  const trailIn = { txid: 'ab'.repeat(32), vout: 0, amount: 1000, scriptPubKey: p2trScript(trailXonly) };
+  const outputs = [{ amount: 100700, scriptPubKey: p2trScript(new Uint8Array(32).fill(7)) }];
+
+  for (const [label, script, signer] of [['untweaked', p2trScript(voucherXonly), voucherXonly], ['tweaked', p2trScript(tweakedXonly), tweakedXonly]]) {
+    it(`signs each input with its own key, unified (${label} voucher)`, () => {
+      const voucherIn = { txid: 'cd'.repeat(32), vout: 1, amount: 100000, scriptPubKey: script, privkey: voucherKey };
+      const tx = parseTransaction(hexToBytes(buildTransaction([trailIn, voucherIn], outputs, trailKey, { unified: true })));
+      assert.strictEqual(tx.inputs.length, 2);
+      assert.strictEqual(tx.outputs.length, 1);
+      const spent = [trailIn, voucherIn].map(i => ({ value: BigInt(i.amount), script: i.scriptPubKey }));
+      for (const [i, pub] of [[0, trailXonly], [1, signer]]) {
+        const sig = tx.inputs[i].witness[0];
+        assert.strictEqual(sig[64], 0x21);
+        assert.ok(schnorr.verify(sig.slice(0, 64), unifiedSighash(tx, i, 0x21, SCRIPT_TYPE_TAPROOT, spent), pub), `input ${i}`);
+      }
+    });
+  }
+
+  it('a single input still builds as before', () => {
+    const one = buildTransaction(trailIn, outputs, trailKey, { unified: true });
+    const arr = buildTransaction([trailIn], outputs, trailKey, { unified: true });
+    assert.strictEqual(parseTransaction(hexToBytes(one)).inputs.length, 1);
+    assert.strictEqual(one.length, arr.length);
+  });
+});
+
 describe('Badge', () => {
   it('reads owner and repo from GitHub remotes in every form', () => {
     for (const url of [
