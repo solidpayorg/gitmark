@@ -67,7 +67,7 @@ The chain of addresses on Bitcoin mirrors the chain of commits in git. Anyone ca
 | Command | Description |
 |---------|-------------|
 | `git mark init` | Initialize trail. Options: `--chain`, `--voucher`, `--force` |
-| `git mark` | Anchor HEAD commit to Bitcoin. Options: `--announce`, `--force` (mark a commit that is already the last mark) |
+| `git mark` | Anchor HEAD commit to Bitcoin. Options: `--announce`, `--force` (mark a commit that is already the last mark), `--local` (derive the previous output from the trail instead of asking the explorer) |
 | `git mark info` | Show trail state, balance, addresses |
 | `git mark verify` | Verify all marks against Bitcoin |
 | `git mark update` | Update blocktrails.json from git notes |
@@ -87,6 +87,8 @@ tags it carries the latest mark: `chain`, `txo` and `commit`. Relays come from g
 git config nostr.relays "wss://relay.damus.io,wss://nos.lol"   # comma or space separated; defaults if unset
 git mark --announce                                            # announce after this mark
 git config gitmark.announce true                               # announce after every mark
+git mark --local                                               # skip the explorer lookup; broadcasting still uses it
+git config gitmark.local true                                  # the same for every mark
 ```
 
 Right after the announcement, the same key publishes the repository state (kind 30618): `d`, `HEAD`, one
