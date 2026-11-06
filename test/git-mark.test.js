@@ -801,6 +801,55 @@ describe('CLI guards', () => {
     }
   });
 
+  // --local: the trail coin's script comes from the trail, so the explorer is only asked to broadcast.
+  // The coin sits at the address chained through the earlier states, and the signature must fit it.
+  for (const [how, flag, config] of [['--local', ['--local'], false], ['gitmark.local', [], true]]) {
+    it(`mark with ${how} signs for the chained address without asking the explorer for it`, async () => {
+      const { dir, env, head } = repo();
+      const key = hexToBytes('11'.repeat(32));
+      const pub = bytesToHex(secp256k1.getPublicKey(key, true));
+      const prior = 'aa'.repeat(20);
+      const coinTxid = 'ab'.repeat(32), newTxid = 'ef'.repeat(32);
+      execFileSync('git', ['config', '--local', 'nostr.privkey', '11'.repeat(32)], { cwd: dir, env });
+      execFileSync('git', ['config', '--local', 'gitmark.txo', `txo:txbt4:${coinTxid}:0?amount=9700`], { cwd: dir, env });
+      if (config) execFileSync('git', ['config', '--local', 'gitmark.local', 'true'], { cwd: dir, env });
+      writeFileSync(join(dir, 'blocktrails.json'), JSON.stringify({ '@type': 'Blocktrail', version: '0.0.3', profile: 'gitmark', pubkeyBase: pub, chain: 'txbt4', states: [prior], txo: [`txo:txbt4:${coinTxid}:0?amount=9700&commit=${prior}`] }));
+
+      const hits = [];
+      let posted = null;
+      const server = createServer((req, res) => {
+        hits.push(`${req.method} ${req.url}`);
+        if (req.method === 'POST' && req.url === '/tx') { let b = ''; req.on('data', d => { b += d; }); req.on('end', () => { posted = b; res.end(newTxid); }); }
+        else { res.statusCode = 404; res.end('not stubbed'); }
+      });
+      await new Promise(r => server.listen(0, '127.0.0.1', r));
+      const explorer = `http://127.0.0.1:${server.address().port}`;
+      try {
+        const r = await new Promise((resolve) => {
+          const c = cp.spawn(process.execPath, [bin, ...flag], { cwd: dir, env: { ...env, GITMARK_EXPLORER: explorer } });
+          let stdout = '', stderr = '';
+          c.stdout.on('data', d => { stdout += d; });
+          c.stderr.on('data', d => { stderr += d; });
+          c.on('close', status => resolve({ status, stdout, stderr }));
+        });
+        assert.strictEqual(r.status, 0, r.stderr);
+        assert.deepStrictEqual(hits, ['POST /tx']);
+
+        const tx = parseTransaction(hexToBytes(posted));
+        const coinXonly = deriveChainedPubkey(hexToBytes(pub), [prior]).slice(1);
+        const nextXonly = deriveChainedPubkey(hexToBytes(pub), [prior, head]).slice(1);
+        assert.deepStrictEqual(tx.outputs[0].script, p2trScript(nextXonly));
+        assert.strictEqual(tx.outputs[0].value, 9400n);
+        const spent = [{ value: 9700n, script: p2trScript(coinXonly) }];
+        assert.ok(schnorr.verify(tx.inputs[0].witness[0].slice(0, 64), unifiedSighash(tx, 0, 0x21, SCRIPT_TYPE_TAPROOT, spent), coinXonly));
+        assert.deepStrictEqual(JSON.parse(readFileSync(join(dir, 'blocktrails.json'), 'utf8')).states, [prior, head]);
+      } finally {
+        server.close();
+        rmSync(dir, { recursive: true });
+      }
+    });
+  }
+
   // --topup end to end against a stub explorer: the voucher file is read, the mark spends the trail
   // coin plus the voucher coin into the next trail address, the broadcast goes out, the voucher is
   // consumed and the trail records the mark. A voucher for another chain is refused before any spend.

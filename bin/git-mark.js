@@ -5,7 +5,8 @@
  *
  * Usage:
  *   git mark init [--chain tbtc4] [--voucher txo:...]
- *   git mark [--announce] [--force]   Anchor HEAD; --force marks a commit that is already the last mark
+ *   git mark [--announce] [--force] [--local]   Anchor HEAD; --force marks a commit that is already the
+ *                                     last mark; --local skips the explorer lookup of the previous output
  *   git mark info
  *   git mark verify
  *   git mark update
@@ -503,14 +504,21 @@ async function cmdMark(args) {
   const nextXonly = nextPub.slice(1);
   const nextScript = p2trScript(nextXonly);
 
-  // Fetch current UTXO scriptPubKey
-  const txResp = await fetch(`${explorer}/tx/${priv.txid}`);
-  if (!txResp.ok) { console.error('Could not fetch current UTXO'); process.exit(1); }
-  const txData = await txResp.json();
-  const prevOut = txData.vout?.[priv.vout];
-  if (!prevOut) { console.error('Current UTXO not found'); process.exit(1); }
+  // The current UTXO's scriptPubKey: asked of the explorer, or with --local derived from the trail,
+  // the same way the last mark derived it as its next address
+  let prevScript;
+  if (args.includes('--local') || gitConfigOr('gitmark.local') === 'true') {
+    prevScript = p2trScript(deriveChainedPubkey(hexToBytes(trail.pubkeyBase), prevStates).slice(1));
+  } else {
+    const txResp = await fetch(`${explorer}/tx/${priv.txid}`);
+    if (!txResp.ok) { console.error('Could not fetch current UTXO'); process.exit(1); }
+    const txData = await txResp.json();
+    const prevOut = txData.vout?.[priv.vout];
+    if (!prevOut) { console.error('Current UTXO not found'); process.exit(1); }
+    prevScript = hexToBytes(prevOut.scriptpubkey);
+  }
 
-  const inputs = [{ txid: priv.txid, vout: priv.vout, amount: priv.amount, scriptPubKey: hexToBytes(prevOut.scriptpubkey) }];
+  const inputs = [{ txid: priv.txid, vout: priv.vout, amount: priv.amount, scriptPubKey: prevScript }];
 
   // --topup <voucher>: the voucher coin rides along as a second input, so the
   // trail continues with more sats instead of restarting from a new genesis
@@ -863,7 +871,7 @@ export {
 // --- CLI ---
 const USAGE = `Usage:
   git mark init [--chain tbtc4] [--voucher txo:...]
-  git mark [--announce] [--force]   # anchor HEAD to Bitcoin: this spends 300 sats, it is not a status command
+  git mark [--announce] [--force] [--local]   # anchor HEAD to Bitcoin: this spends 300 sats, it is not a status command
   git mark --topup <voucher>        # the same, with a voucher coin added to the trail (no restart)
   git mark info                     # show trail state
   git mark verify                   # verify trail against Bitcoin
