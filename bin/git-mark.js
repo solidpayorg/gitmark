@@ -45,6 +45,8 @@ const CHAINS = {
   tbtc4:  { explorer: 'https://mempool.space/testnet4/api', name: 'Bitcoin Testnet4', hrp: 'tb' },
   btc:    { explorer: 'https://mempool.space/api', name: 'Bitcoin', hrp: 'bc' },
   signet: { explorer: 'https://mempool.space/signet/api', name: 'Bitcoin Signet', hrp: 'tb' },
+  // testnet5 (BIP95) has no public esplora API yet: set GITMARK_EXPLORER, e.g. a local esplora-lite
+  tbtc5:  { explorer: null, name: 'Bitcoin Testnet5', hrp: 'tb' },
   xbt:    { explorer: 'https://mempool.kilombino.com/api', name: 'Bitcoin BLAKE2b', hrp: 'bc', unified: true },
   txbt4:  { explorer: 'https://mempool.guide/testnet4/api', name: 'Bitcoin BLAKE2b Testnet4', hrp: 'tb', unified: true },
 };
